@@ -12,6 +12,5 @@ inputs = {
   account_id = get_aws_account_id()
   region     = local.config.region.primary
   project    = local.config.project_name
-  module     = local.module
-
+  prefix     = "${local.config.project_name}-${local.module}"
 }

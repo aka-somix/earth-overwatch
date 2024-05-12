@@ -13,7 +13,7 @@ variable "project" {
   type        = string
 }
 
-variable "module" {
-  description = "The Descriptive Name for this module"
+variable "prefix" {
+  description = "The prefix for the resources in this module"
   type        = string
 }
