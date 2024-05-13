@@ -1,1 +1,4 @@
-# This is where you put your resource declaration
+resource "aws_s3_bucket" "this" {
+  bucket = var.bucket # If omitted, Terraform will assign a random, unique name.
+  tags   = var.tags
+}
