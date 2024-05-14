@@ -31,6 +31,7 @@ variable "subnet_ids" {
 variable "sharing_settings_bucket" {
   type = object({
     id = string
+    arn = string
   })
 }
 

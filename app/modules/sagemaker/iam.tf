@@ -53,7 +53,7 @@ data "aws_iam_policy_document" "sagemaker_s3_data" {
   statement {
     actions   = ["s3:ListBucket"]
     effect    = "Allow"
-    resources = [module.data.s3_bucket_arn]
+    resources = [var.sharing_settings_bucket.arn]
   }
   statement {
     actions = [
@@ -62,7 +62,7 @@ data "aws_iam_policy_document" "sagemaker_s3_data" {
       "s3:DeleteObject",
     ]
     effect    = "Allow"
-    resources = ["${module.data.s3_bucket_arn}/*"]
+    resources = [var.sharing_settings_bucket.arn]
   }
 }
 

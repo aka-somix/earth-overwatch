@@ -12,7 +12,7 @@ data "aws_vpc" "this" {
 #
 # SUBNETS
 #
-data "aws_subnet" "this" {
+data "aws_subnets" "this" {
   filter {
     name   = "tag:Name"
     values = var.subnets_tag
