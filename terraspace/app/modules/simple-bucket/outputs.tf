@@ -1,4 +1,3 @@
-output "name" {
-  description = "Bucket name"
-  value       = aws_s3_bucket.this.id
+output "bucket" {
+  value = aws_s3_bucket.this
 }
