@@ -17,7 +17,7 @@ module "vpc" {
   subnets_tag = ["rfa-labs-dmz-subnet-0", "rfa-labs-dmz-subnet-1", "rfa-labs-dmz-subnet-2"]
 }
 
-module "sagemaker_domain" {
+module "sagemaker" {
   source             = "../../modules/sagemaker"
   domain_name        = "${local.prefix}-sgmk-domain"
   username           = "${local.prefix}-test-user"
@@ -30,4 +30,13 @@ module "sagemaker_domain" {
 
   subnet_ids = module.vpc.subnet_ids
   vpc_id     = module.vpc.vpc.id
+}
+
+#
+# STUDIO APP Associated
+resource "aws_sagemaker_app" "studio" {
+  domain_id         = module.sagemaker.sagemaker_domain.id
+  user_profile_name = module.sagemaker.sagemaker_user.user_profile_name
+  app_name          = "${local.prefix}-studio"
+  app_type          = "JupyterServer"
 }

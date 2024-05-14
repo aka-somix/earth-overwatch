@@ -20,3 +20,10 @@ variable "project" {
   description = "project prefix name"
   type        = string
 }
+
+variable "datasets_bucket" {
+  type = object({
+    id  = string
+    arn = string
+  })
+}
