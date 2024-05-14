@@ -15,8 +15,8 @@ None
 
 ### Requirements
 
-* Terraform 1.5.X (or higher)
-* Terragrunt 0.54.X (or higher)
+* Terraform 1.5.X
+* Terraspace 2.X.X
 
 ### Start Contributing
 Just install the requirements and clone the repository, then you should be ready to contribute to the project.
