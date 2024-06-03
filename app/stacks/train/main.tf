@@ -37,6 +37,6 @@ module "sagemaker" {
 resource "aws_sagemaker_app" "studio" {
   domain_id         = module.sagemaker.sagemaker_domain.id
   user_profile_name = module.sagemaker.sagemaker_user.user_profile_name
-  app_name          = "${local.prefix}-studio"
+  app_name          = "default"
   app_type          = "JupyterServer"
 }

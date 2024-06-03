@@ -1,3 +1,3 @@
 stack_tags = {
-    "stack" = "storage"
+    "Stack" = "storage"
 }
