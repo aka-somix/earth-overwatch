@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  # PostgreSQL Database Container
+  postgisdb:
+    image: postgis/postgis:15-master
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"  # Map local port 5432 to container port 5432
+    volumes:
+      - pgisdata:/var/lib/postgresql/data
+
+volumes:
+  pgisdata:

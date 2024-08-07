@@ -1,6 +1,8 @@
 
 # Tesi: Eco Guardian
 
+This repository will be only used to test and do some research about the 
+
 ## Dependencies 🔗
 None
 
@@ -8,8 +10,6 @@ None
 
 ![Cloud](https://img.shields.io/badge/Cloud-AWS-FF9900?logo=amazon-aws&style=for-the-badge)  
 ![IaaC](https://img.shields.io/badge/IaC-Terraform-8A2BE2?logo=terraform&style=for-the-badge)  
-
-
 
 ## Setup 🛠️
 
