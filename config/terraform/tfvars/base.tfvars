@@ -1,10 +1,11 @@
 env  = "<%= Terraspace.env %>"
 region = "eu-west-1"
-project = "tesi-eg"
+project = "sctesi"
 
 default_tags = {
     "Owner" = "s.cirone"
-    "Project" = "tesi-eg"
-    "Repository" = "scirone-eg-infra"
-    "Iac" = "Terraform"
+    "Project" = "sctesi"
+    "Repository" = "scirone-tesi-infra"
+    "Iac" = "Terraspace"
+    "CreatedAt" = "${formatdate("YYYY-MM-DD", timestamp())}"
 }
