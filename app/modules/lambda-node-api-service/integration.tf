@@ -10,7 +10,7 @@ resource "aws_lambda_permission" "allow_api_gateway" {
   source_arn = "${var.apigw_rest_api.execution_arn}/*/*/*"
 
   depends_on = [
-    aws_api_gateway_resource.proxy
+    aws_api_gateway_resource.this
   ]
 }
 
@@ -58,8 +58,7 @@ resource "aws_api_gateway_method" "any_this_proxy" {
   rest_api_id      = var.apigw_rest_api.id
   resource_id      = aws_api_gateway_resource.this_proxy.id
   http_method      = "ANY"
-  authorization    = "COGNITO_USER_POOLS"
-  authorizer_id    = data.aws_api_gateway_authorizer.cognito.id
+  authorization    = "NONE"
   api_key_required = true
 }
 
@@ -68,7 +67,7 @@ resource "aws_api_gateway_integration" "this_proxy" {
   resource_id = aws_api_gateway_method.any_this_proxy.resource_id
   http_method = aws_api_gateway_method.any_this_proxy.http_method
   type        = "AWS_PROXY"
-  uri         = var.aws_lambda_this_handler.invoke_arn
+  uri         = aws_lambda_function.this.invoke_arn
 
   # AWS lambdas can only be invoked with the POST method
   integration_http_method = "POST"

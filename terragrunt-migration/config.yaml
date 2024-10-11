@@ -1,0 +1,32 @@
+# *
+# * Repository Config
+# * ----------------------------------------------------------------
+# Variables used across the project to inject specific project
+# values
+#
+# Remember to fill this configuration and keep it updated.
+# This is used for building the project both locally and from
+# CI Pipeline.
+#
+
+# Repository Name
+repository_name: &repo_name scirone-eg-infra
+
+# Project Name (Suggested < 10 chars)
+# This is used as prefix for every resource deployed
+project_name: &proj_name scrnts
+
+region:
+  primary: eu-west-1
+  failover-1: eu-central-1
+
+# Default Tags for each region
+tags:
+  - key: created_with
+    value: Terraform
+  - key: source
+    value: *repo_name
+  - key: project
+    value: *proj_name
+  - key: owner
+    value: "s.cirone"

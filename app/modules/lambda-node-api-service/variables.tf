@@ -28,13 +28,13 @@ variable "timeout" {
 variable "vpc" {
   description = "VPC configuration for Lambda. VPC networking is optional."
   type = object({
-    enabled           = bool
-    subnet_ids        = optional(list(string), [])
+    enabled            = bool
+    subnet_ids         = optional(list(string), [])
     security_group_ids = optional(list(string), [])
   })
   default = {
-    enabled = false
-    subnet_ids = []
+    enabled            = false
+    subnet_ids         = []
     security_group_ids = []
   }
 }
@@ -66,7 +66,12 @@ variable "apigw_rest_api" {
 }
 
 variable "lambda_service_resource_path" {
-  description = "The resource path part in the API Gateway for Lambda (e.g., 'data-service')."
+  description = "The resource path part in the API Gateway for Lambda"
+  type        = string
+}
+
+variable "lambda_packages_bucket" {
+  description = "The bucket for lambda packages"
   type        = string
 }
 

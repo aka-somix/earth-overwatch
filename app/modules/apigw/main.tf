@@ -7,13 +7,6 @@ resource "aws_api_gateway_rest_api" "this" {
   }
 }
 
-# Create a resource in the API Gateway
-resource "aws_api_gateway_resource" "root" {
-  rest_api_id = aws_api_gateway_rest_api.this.id
-  parent_id   = aws_api_gateway_rest_api.this.root_resource_id
-  path_part   = "/"
-}
-
 #
 # --- Health resource ---
 #
@@ -59,7 +52,7 @@ resource "aws_api_gateway_method_response" "health_200" {
 
 resource "aws_api_gateway_model" "empty" {
   rest_api_id  = aws_api_gateway_rest_api.this.id
-  name         = "Empty"
+  name         = "Empty2"
   description  = "an Empty JSON schema"
   content_type = "application/json"
 

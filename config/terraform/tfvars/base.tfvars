@@ -7,5 +7,4 @@ default_tags = {
     "Project" = "sctesi"
     "Repository" = "scirone-tesi-infra"
     "Iac" = "Terraspace"
-    "CreatedAt" = "${formatdate("YYYY-MM-DD", timestamp())}"
 }

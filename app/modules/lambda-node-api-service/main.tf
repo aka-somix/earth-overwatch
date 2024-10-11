@@ -78,12 +78,12 @@ resource "null_resource" "build_package" {
 
   provisioner "local-exec" {
     working_dir = var.source_code_folder
-    command     = "yarn --frozen-lockfile --mutex network"
+    command     = "pnpm install"
   }
 
   provisioner "local-exec" {
     working_dir = var.source_code_folder
-    command     = "yarn build"
+    command     = "pnpm build"
   }
 }
 
@@ -96,7 +96,7 @@ data "archive_file" "source" {
 }
 
 resource "aws_s3_object" "lambda_zip_build" {
-  bucket = data.aws_s3_bucket.lambda_packages.id
+  bucket = var.lambda_packages_bucket
   key    = "${var.function_name}.zip"
   source = data.archive_file.source.output_path
   etag   = data.archive_file.source.output_md5
