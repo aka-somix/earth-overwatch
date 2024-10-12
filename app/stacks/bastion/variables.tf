@@ -1,11 +1,17 @@
 # This is where you put your variables declaration
-
-variable "name" {
-  type = string
+variable "env" {
+  description = "Current Environment"
+  type        = string
 }
 
-variable "ami_id" {
-  type = string
+variable "region" {
+  description = "AWS Region"
+  type        = string
+}
+
+variable "project_name" {
+  description = "project prefix name"
+  type        = string
 }
 
 variable "ssh_key_pair_name" {
@@ -24,7 +30,7 @@ variable "subnet_id" {
 }
 
 variable "tags" {
-  type = map(string)
+  type    = map(string)
   default = {}
 }
 

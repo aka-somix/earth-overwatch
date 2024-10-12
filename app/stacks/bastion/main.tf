@@ -1,8 +1,11 @@
 # This is where you put your resource declaration
+locals {
+  resprefix = "${var.project_name}-${var.env}-wildfire"
+}
 
 resource "aws_launch_template" "this" {
-  name                    = "${var.name}-bastionhost"
-  image_id                = var.ami_id
+  name                    = "${local.resprefix}-bastionhost"
+  image_id                = "ami-04e49d62cf88738f1"
   instance_type           = "t3.micro"
   user_data               = filebase64("${path.module}/userdata/userdata.sh")
   key_name                = var.ssh_key_pair_name
@@ -33,7 +36,7 @@ resource "aws_launch_template" "this" {
     tags = merge(
       var.tags,
       {
-        "Name" = "${var.name}-bastionhost"
+        "Name" = "${local.resprefix}-bastionhost"
       }
     )
   }
@@ -43,7 +46,7 @@ resource "aws_launch_template" "this" {
     tags = merge(
       var.tags,
       {
-        "Name" = "${var.name}-bastionhost"
+        "Name" = "${local.resprefix}-bastionhost"
       }
     )
   }
@@ -51,15 +54,8 @@ resource "aws_launch_template" "this" {
   tags = var.tags
 }
 
-# resource "aws_ebs_volume" "DevDataVolume" {
-#   availability_zone = var.region
-#   size              = 50
-#   encrypted         = true
-#   tags              = var.tags
-# }
-
 resource "aws_autoscaling_group" "this" {
-  name = "${var.name}-bh-ag"
+  name = "${local.resprefix}-bh-ag"
 
   launch_template {
     id      = aws_launch_template.this.id
@@ -81,12 +77,12 @@ resource "aws_autoscaling_group" "this" {
 
 # ---------- IAM ROLES AND POLICIES ----------
 resource "aws_iam_instance_profile" "this" {
-  name = "${var.name}-bh-instance-profile"
+  name = "${local.resprefix}-bh-instance-profile"
   role = aws_iam_role.this.id
 }
 
 resource "aws_iam_role" "this" {
-  name = "${var.name}-bh-role"
+  name = "${local.resprefix}-bh-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -206,7 +202,7 @@ resource "aws_iam_role_policy_attachment" "ssm_core" {
 
 # ---------- Security Group ----------
 resource "aws_security_group" "this" {
-  name        = "${var.name}-bh-outbound-sg"
+  name        = "${local.resprefix}-bh-outbound-sg"
   description = "Allow only outbound traffic"
   vpc_id      = var.vpc.id
 

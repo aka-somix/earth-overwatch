@@ -1,5 +1,5 @@
 locals {
-  resprefix = "${var.project}-${var.env}-events"
+  resprefix = "${var.project_name}-${var.env}-events"
 }
 
 # This is where you put your resource declaration

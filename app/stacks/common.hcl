@@ -1,6 +1,6 @@
 locals {
   config = yamldecode(file(find_in_parent_folders("config.yaml"))) # <----- Points to the config file
-  stage   = yamldecode(file("config/${get_env("ENV", "dev")}.yaml")) # <---- DEFAULTS TO DEV
+  stage   = yamldecode(file("../config/${get_env("ENV", "dev")}.yaml")) # <---- DEFAULTS TO DEV
 
   default_tags = { for t in local.config.tags: t.key => t.value } 
 }
