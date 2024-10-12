@@ -14,7 +14,7 @@ dependency "network" {
   mock_outputs_merge_with_state = contains(["init", "validate", "plan"], get_terraform_command()) ? true : false
   mock_outputs = {
     rfa_labs_vpc = {},
-    rfa_labs_dmz_subnets = [{id="mock"}]
+    rfa_labs_dmz_subnets = {ids = ["mock"]}
   }
 }
 
@@ -30,5 +30,5 @@ inputs = {
   min_capacity            = 1
   desired_capacity        = 1
   vpc                     = dependency.network.outputs.rfa_labs_vpc
-  subnet_id               = dependency.network.outputs.rfa_labs_dmz_subnets[0].id
+  subnet_id               = dependency.network.outputs.rfa_labs_dmz_subnets.ids[0]
 }

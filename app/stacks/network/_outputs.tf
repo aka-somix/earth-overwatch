@@ -4,7 +4,7 @@ output "rfa_labs_vpc" {
   value = data.aws_vpc.rfa_labs
 }
 
-output "rfa_labs_public_subnets" {
+output "rfa_labs_public_subnet" {
   value = data.aws_subnets.rfalabs_public
 }
 output "rfa_labs_dmz_subnets" {
