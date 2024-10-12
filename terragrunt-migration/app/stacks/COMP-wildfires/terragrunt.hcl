@@ -1,9 +1,5 @@
 include {
-  path   = find_in_parent_folders()
-}
-
-terraform {
-  source = "../../../modules/bucket"
+  path   = find_in_parent_folders("common.hcl")
 }
 
 locals{

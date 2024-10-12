@@ -5,9 +5,6 @@ locals {
   default_tags = { for t in local.config.tags: t.key => t.value } 
 }
 
-terraform {
-  source = "."
-}
 
 remote_state {
   backend = "s3"
@@ -20,6 +17,10 @@ remote_state {
     s3_bucket_tags      = local.default_tags
     dynamodb_table_tags = local.default_tags
   }
+}
+
+terraform {
+  source = "."
 }
 
 // Inputs for the Provider
