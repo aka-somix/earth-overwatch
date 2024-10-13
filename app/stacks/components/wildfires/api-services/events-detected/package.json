@@ -10,7 +10,8 @@
     "upgrade": "pnpm upgrade --latest",
     "lint": "eslint --ignore-path .eslintignore --ext .js,.ts .",
     "build": "esbuild src/app.ts --bundle --platform=node --outfile=dist/index.js",
-    "dev": "pnpm ts-node ./src/local-server.ts;"
+    "dev": "ts-node ./src/local-server.ts;",
+    "gen:types": "openapi --input ./openapi.yaml --output ./src/@types/openapi --exportCore false --exportServices false"
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.665.0",

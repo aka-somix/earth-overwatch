@@ -2,7 +2,7 @@
 import express from 'express';
 import { BASE_PATH } from "./config";
 import { logger } from "./libs/powertools";
-import router from "./router";
+import router from "./controller";
 import cors = require("cors");
 import serverless = require("serverless-http");
 
@@ -17,7 +17,7 @@ app.use(express.json());
 /**
  *  Instantiate Router middleware
  */
-app.use(`${BASE_PATH}/`, router);
+app.use(`/${BASE_PATH}/`, router);
 
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
   logger.error(`No resource found at given path ${req.path}`);

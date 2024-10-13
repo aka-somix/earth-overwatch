@@ -10,7 +10,10 @@ resource "aws_api_gateway_deployment" "wildfire" {
     create_before_destroy = true
   }
 
-  depends_on = [module.lambda_service_fromsat]
+  depends_on = [
+    module.lambda_service_events_detected,
+    module.lambda_service_feedback
+  ]
 }
 
 resource "aws_api_gateway_stage" "env" {
@@ -31,4 +34,27 @@ resource "aws_api_gateway_method_settings" "all" {
     throttling_burst_limit = 10000
     throttling_rate_limit  = 100
   }
+}
+
+
+#
+# --- DEMO USAGE PLAN + API KEY ---
+#
+
+resource "aws_api_gateway_usage_plan" "demo" {
+  name = local.resprefix
+  api_stages {
+    api_id = module.wildfire_apigw.api.id
+    stage  = aws_api_gateway_stage.env.stage_name
+  }
+}
+resource "aws_api_gateway_usage_plan_key" "demo" {
+  key_id        = aws_api_gateway_api_key.demo.id
+  key_type      = "API_KEY"
+  usage_plan_id = aws_api_gateway_usage_plan.demo.id
+}
+
+resource "aws_api_gateway_api_key" "demo" {
+  name    = "${local.resprefix}-demo-apikey"
+  enabled = true
 }

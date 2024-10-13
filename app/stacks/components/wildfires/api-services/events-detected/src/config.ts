@@ -41,4 +41,4 @@ export const AWS_REGION = process.env.AWS_REGION ?? "eu-west-1";
 export const LOG_LEVEL = (process.env.LOG_LEVEL ?? "INFO") as LogLevel;
 
 // Base path of this service
-export const BASE_PATH = process.env.BASE_PATH ?? "/main";
+export const BASE_PATH = process.env.BASE_PATH ?? "main";

@@ -1,0 +1,129 @@
+openapi: 3.0.1
+info:
+  title: Wildfire Detection Service
+  version: 1.0.0
+
+paths:
+  /events:
+    get:
+      summary: Retrieve all detected events
+      description: Get a list of all events detected, with optional filtering by municipality and detection time.
+      parameters:
+        - name: municipality
+          in: query
+          description: Municipality ID to filter events.
+          required: false
+          schema:
+            type: integer
+        - name: detection_time
+          in: query
+          description: Filter events by detection time (start and end timestamp).
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: A list of detected events.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+        '400':
+          description: Invalid parameters or filters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /events/{id}:
+    get:
+      summary: Retrieve event details
+      description: Get detailed information about a specific event, including its location as a polygon (for SAT) or point (for SIG).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the event to retrieve.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Event details along with its geometry information.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '404':
+          description: Event not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400':
+          description: Invalid event ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        detected_from:
+          type: string
+          description: Detection type.
+          example: SAT
+        detection_time:
+          type: string
+          format: date-time
+          description: Time when the event was detected.
+          example: "2023-10-13T12:00:00Z"
+        municipality_id:
+          type: integer
+          description: ID of the municipality.
+          example: 1001
+        geometry:
+          oneOf:
+            - type: object
+              description: Geometry for SAT type events (Polygon)
+              properties:
+                type:
+                  type: string
+                  example: MultiPolygon
+                coordinates:
+                  type: array
+                  description: Coordinates of the polygon
+                  items:
+                    type: array
+                    items:
+                      type: array
+                      items:
+                        type: number
+                        example: [45.12345, -73.12345]
+            - type: object
+              description: Geometry for SIG type events (Point)
+              properties:
+                type:
+                  type: string
+                  example: Point
+                coordinates:
+                  type: array
+                  description: Coordinates of the point
+                  items:
+                    type: number
+                    example: [45.12345, -73.12345]
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Invalid event ID."
