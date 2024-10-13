@@ -18,8 +18,8 @@ resource "aws_rds_cluster" "this" {
   vpc_security_group_ids = var.database_security_groups_ids
 
   serverlessv2_scaling_configuration {
-    max_capacity = 4
-    min_capacity = 0.5
+    max_capacity = var.max_capacity
+    min_capacity = var.min_capacity
   }
 
   tags = var.tags

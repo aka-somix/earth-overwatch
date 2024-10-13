@@ -1,10 +1,10 @@
 # This is where you put your resource declaration
 locals {
-  resprefix = "${var.project_name}-${var.env}-wildfire"
+  resprefix = "${var.project_name}-${var.env}-bastion"
 }
 
 resource "aws_launch_template" "this" {
-  name                    = "${local.resprefix}-bastionhost"
+  name                    = "${local.resprefix}-host"
   image_id                = "ami-04e49d62cf88738f1"
   instance_type           = "t3.micro"
   user_data               = filebase64("${path.module}/userdata/userdata.sh")
@@ -14,7 +14,7 @@ resource "aws_launch_template" "this" {
   network_interfaces {
     subnet_id                   = var.subnet_id
     associate_public_ip_address = false
-    security_groups             = [aws_security_group.this.id]
+    security_groups             = var.security_group_ids
   }
 
   iam_instance_profile {
@@ -55,7 +55,7 @@ resource "aws_launch_template" "this" {
 }
 
 resource "aws_autoscaling_group" "this" {
-  name = "${local.resprefix}-bh-ag"
+  name = "${local.resprefix}-ag"
 
   launch_template {
     id      = aws_launch_template.this.id
@@ -77,12 +77,12 @@ resource "aws_autoscaling_group" "this" {
 
 # ---------- IAM ROLES AND POLICIES ----------
 resource "aws_iam_instance_profile" "this" {
-  name = "${local.resprefix}-bh-instance-profile"
+  name = "${local.resprefix}-instance-profile"
   role = aws_iam_role.this.id
 }
 
 resource "aws_iam_role" "this" {
-  name = "${local.resprefix}-bh-role"
+  name = "${local.resprefix}-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -193,34 +193,4 @@ resource "aws_iam_role" "this" {
 resource "aws_iam_role_policy_attachment" "ssm_core" {
   role       = aws_iam_role.this.id
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-}
-
-# resource "aws_iam_role_policy_attachment" "autoscaling" {
-#   role       = aws_iam_role.this.id
-#   policy_arn = "arn:aws:iam::aws:policy/aws-service-role/AutoScalingServiceRolePolicy"
-# }
-
-# ---------- Security Group ----------
-resource "aws_security_group" "this" {
-  name        = "${local.resprefix}-bh-outbound-sg"
-  description = "Allow only outbound traffic"
-  vpc_id      = var.vpc.id
-
-  ingress {
-    description = "TLS from VPC"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [var.vpc.cidr_block]
-  }
-
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
-  }
-
-  tags = var.tags
 }

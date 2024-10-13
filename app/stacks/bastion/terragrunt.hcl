@@ -15,6 +15,7 @@ dependency "network" {
   mock_outputs = {
     rfa_labs_vpc = {},
     rfa_labs_dmz_subnets = {ids = ["mock"]}
+    outbound_to_vpc_sg_id = "string"
   }
 }
 
@@ -31,4 +32,7 @@ inputs = {
   desired_capacity        = 1
   vpc                     = dependency.network.outputs.rfa_labs_vpc
   subnet_id               = dependency.network.outputs.rfa_labs_dmz_subnets.ids[0]
+  security_group_ids      = [
+                              dependency.network.outputs.outbound_to_vpc_sg_id
+                            ]
 }

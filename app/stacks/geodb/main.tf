@@ -10,17 +10,15 @@ resource "random_password" "geodbpsw" {
 }
 
 module "geodb" {
-  source = "./aurora-serverless"
+  source = "./tf-modules/aurora-serverless"
 
   cluster_name   = local.resprefix
   database_name  = "geo"
   engine_version = 15.4
 
   # Connectivity
-  database_security_groups_ids = [
-    aws_security_group.inbound_requests.id
-  ]
-  database_subnets_ids = var.subnet_ids
+  database_security_groups_ids = var.security_group_ids
+  database_subnets_ids         = var.subnet_ids
 
   # Credentials
   username = "postgres"

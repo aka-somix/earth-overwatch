@@ -32,3 +32,13 @@ variable "database_subnets_ids" {
 variable "database_security_groups_ids" {
   type = list(string)
 }
+
+variable "min_capacity" {
+  type    = number
+  default = 0.5
+}
+
+variable "max_capacity" {
+  type    = number
+  default = 4
+}
