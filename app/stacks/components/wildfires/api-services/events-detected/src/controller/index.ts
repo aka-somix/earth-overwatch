@@ -5,18 +5,6 @@ import { EventFilter } from "../@types";
 import { NextFunction } from "express-serve-static-core";
 const router = Router();
 
-
-router.get("/ping", async (req: Request, res: Response) => {
-    try {
-        logger.info(`Processed ${req.method} Request for path: ${req.path}`);
-        res.status(200).json({ message: "pong" });
-
-    } catch (error: unknown) {
-        logger.error(`Error while processing ${req.method} Request for path: ${req.path}: ${typeof error}`, { error });
-        res.status(500).json(error);
-    }
-});
-
 /**
  * TODO Docs here
  */
