@@ -16,18 +16,6 @@ export type Event = {
      * ID of the municipality.
      */
     municipality_id?: number;
-    geometry?: ({
-        type?: string;
-        /**
-         * Coordinates of the polygon
-         */
-        coordinates?: Array<Array<Array<number>>>;
-    } | {
-        type?: string;
-        /**
-         * Coordinates of the point
-         */
-        coordinates?: Array<number>;
-    });
+    geometry?: any;
 };
 

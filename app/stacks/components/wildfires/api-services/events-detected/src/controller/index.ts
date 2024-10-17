@@ -3,6 +3,7 @@ import { EventDAO } from "../DAO/Event";
 import { logger } from '../libs/powertools';
 import { EventFilter } from "../@types";
 import { NextFunction } from "express-serve-static-core";
+import { getDbClient } from "../libs/database";
 const router = Router();
 
 /**
@@ -18,7 +19,10 @@ router.get("/", async (req: Request, res: Response) => {
             municipality: queryParams.municipality?.toString()
         }
 
-        const events = await new EventDAO().getEvents(filters);
+        // TODO: This should be put somewhere else
+        const db = await getDbClient();
+
+        const events = await new EventDAO(db).getEvents(filters);
 
         // RESPONSE
         logger.info(`Processed ${req.method} Request for path: ${req.path}`);
@@ -39,7 +43,10 @@ router.get("/:id", async (req: Request, res: Response) => {
 
         const { id } = req.params;
 
-        const eventFound = await new EventDAO().getEventByID(id);
+        // TODO: This should be put somewhere else
+        const db = await getDbClient();
+
+        const eventFound = await new EventDAO(db).getEventByID(id);
 
         if (eventFound === null) {
             res.status(404).json({

@@ -42,3 +42,12 @@ export const LOG_LEVEL = (process.env.LOG_LEVEL ?? "INFO") as LogLevel;
 
 // Base path of this service
 export const BASE_PATH = process.env.BASE_PATH ?? "main";
+
+// DATABASE CONFIG ~ Only for LOCAL stage 
+export const PG_HOST = process.env.PG_HOST ?? 'localhost';
+export const PG_USER = process.env.PG_USER ?? 'postgres';
+export const PG_PASSWORD = process.env.PG_PASSWORD;
+export const PG_DATABASE = process.env.PG_DATABASE;
+
+// DATABASE CREDENTIALS
+export const PG_CREDENTIALS = process.env.PG_CREDENTIALS ?? 'not-set';
