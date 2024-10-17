@@ -60,12 +60,12 @@ resource "aws_iam_role_policy_attachment" "vpc_access" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
-# resource "aws_iam_role_policy_attachment" "attached_policies" {
-#   for_each = toset(var.attached_policies)
+resource "aws_iam_role_policy_attachment" "attached_policies" {
+  for_each = toset(var.attached_policies)
 
-#   role       = aws_iam_role.this.name
-#   policy_arn = each.value
-# }
+  role       = aws_iam_role.this.name
+  policy_arn = each.value
+}
 
 
 #

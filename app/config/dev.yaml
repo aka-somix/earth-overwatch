@@ -1,1 +1,5 @@
 env: dev
+
+api_key_id: "6yrrzk3z6d"
+
+s3_bucket_lambda_packages: "cicd-lambda-packages"

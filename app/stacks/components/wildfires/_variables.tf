@@ -13,8 +13,12 @@ variable "project_name" {
   type        = string
 }
 
-variable "geodb_endpoint" {
-  description = "Endpoint for reaching the common GeoDB"
+variable "api_key_id" {
+  description = "the api key id for apigw"
+  type        = string
+}
+
+variable "s3_bucket_lambda_packages" {
   type = string
 }
 
@@ -23,5 +27,9 @@ variable "subnet_ids" {
 }
 
 variable "security_group_ids" {
+  type = list(string)
+}
+
+variable "lambda_security_group_ids" {
   type = list(string)
 }

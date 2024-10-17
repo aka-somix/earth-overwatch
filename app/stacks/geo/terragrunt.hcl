@@ -22,14 +22,22 @@ dependency "network" {
 
 inputs = {
   # module configuration variables
-  account_id              = get_aws_account_id()
-  region                  = local.config.region.primary
-  project_name            = local.config.project_name
-  env                     = local.stage.env
+  account_id                  = get_aws_account_id()
+  region                      = local.config.region.primary
+  project_name                = local.config.project_name
+  env                         = local.stage.env
 
-  vpc                     = dependency.network.outputs.rfa_labs_vpc
-  subnet_ids              = dependency.network.outputs.rfa_labs_dmz_subnets.ids
-  security_group_ids      = [
+  api_key_id                  = local.stage.api_key_id
+  s3_bucket_lambda_packages   = local.stage.s3_bucket_lambda_packages
+
+  vpc                         = dependency.network.outputs.rfa_labs_vpc
+  subnet_ids                  = dependency.network.outputs.rfa_labs_dmz_subnets.ids
+  
+  security_group_ids          = [
     dependency.network.outputs.inbound_from_vpc_sg_id
+  ]
+
+  lambda_security_group_ids = [
+    dependency.network.outputs.outbound_to_vpc_sg_id
   ]
 }

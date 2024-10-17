@@ -11,8 +11,7 @@ resource "aws_api_gateway_deployment" "wildfire" {
   }
 
   depends_on = [
-    module.lambda_service_events_detected,
-    module.lambda_service_feedback
+    module.lambda_service_monitor
   ]
 }
 
