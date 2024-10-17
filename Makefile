@@ -1,0 +1,2 @@
+clean:
+	./scripts/cleanup.sh
