@@ -14,7 +14,7 @@ resource "aws_launch_template" "this" {
   network_interfaces {
     subnet_id                   = var.subnet_id
     associate_public_ip_address = false
-    security_groups             = var.security_group_ids
+    security_groups             = [aws_security_group.this.id]
   }
 
   iam_instance_profile {
@@ -96,101 +96,113 @@ resource "aws_iam_role" "this" {
       },
     ]
   })
-
-  inline_policy {
-    name = "ssm"
-    policy = jsonencode({
-      "Version" : "2012-10-17",
-      "Statement" : [
-        {
-          "Action" : [
-            "ssmmessages:CreateControlChannel",
-            "ssmmessages:CreateDataChannel",
-            "ssmmessages:OpenControlChannel",
-            "ssmmessages:OpenDataChannel",
-            "ssm:UpdateInstanceInformation",
-            "ssm-guiconnect:CancelConnection",
-            "ssm-guiconnect:GetConnection",
-            "ssm-guiconnect:StartConnection"
-          ],
-          "Resource" : "*",
-          "Effect" : "Allow"
-        },
-        {
-          "Action" : [
-            "s3:GetObject",
-            "s3:PutObject",
-            "s3:GetEncryptionConfiguration"
-          ],
-          "Resource" : [
-            "arn:aws:s3:::mps-*-session-manager-logs",
-            "arn:aws:s3:::mps-*-session-manager-logs/*"
-          ],
-          "Effect" : "Allow"
-        },
-        {
-          "Action" : [
-            "s3:GetEncryptionConfiguration"
-          ],
-          "Resource" : "*",
-          "Effect" : "Allow"
-        },
-        {
-          "Action" : [
-            "kms:GenerateDataKey"
-          ],
-          "Resource" : "*",
-          "Effect" : "Allow"
-        }
-      ]
-    })
-  }
-
-  inline_policy {
-    name = "system-access"
-    policy = jsonencode({
-      "Version" : "2012-10-17",
-      "Statement" : [
-        {
-          "Action" : [
-            "s3:GetObject"
-          ],
-          "Resource" : [
-            "arn:aws:s3:::aws-ssm-*/*",
-            "arn:aws:s3:::aws-windows-downloads-*/*",
-            "arn:aws:s3:::amazon-ssm-*/*",
-            "arn:aws:s3:::amazon-ssm-packages-*/*",
-            "arn:aws:s3:::*-birdwatcher-prod/*",
-            "arn:aws:s3:::aws-ssm-distributor-file-*/*",
-            "arn:aws:s3:::aws-ssm-document-attachments-*/*",
-            "arn:aws:s3:::patch-baseline-snapshot-*/*"
-          ],
-          "Effect" : "Allow"
-        }
-      ]
-    })
-  }
-
-  inline_policy {
-    name = "opensearch-access"
-    policy = jsonencode({
-      "Version" : "2012-10-17",
-      "Statement" : [
-        {
-          "Effect" : "Allow",
-          "Action" : [
-            "es:*"
-          ],
-          "Resource" : "arn:aws:es:*:*:domain/*"
-        }
-      ]
-    })
-  }
-
   tags = var.tags
+}
+
+resource "aws_iam_role_policy" "ssm_access" {
+  name = "ssm_access"
+  role = aws_iam_role.this.id
+
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Action" : [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel",
+          "ssm:UpdateInstanceInformation",
+          "ssm-guiconnect:CancelConnection",
+          "ssm-guiconnect:GetConnection",
+          "ssm-guiconnect:StartConnection"
+        ],
+        "Resource" : "*",
+        "Effect" : "Allow"
+      },
+      {
+        "Action" : [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:GetEncryptionConfiguration"
+        ],
+        "Resource" : [
+          "arn:aws:s3:::mps-*-session-manager-logs",
+          "arn:aws:s3:::mps-*-session-manager-logs/*"
+        ],
+        "Effect" : "Allow"
+      },
+      {
+        "Action" : [
+          "s3:GetEncryptionConfiguration"
+        ],
+        "Resource" : "*",
+        "Effect" : "Allow"
+      },
+      {
+        "Action" : [
+          "kms:GenerateDataKey"
+        ],
+        "Resource" : "*",
+        "Effect" : "Allow"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "system_access" {
+  name = "system_access"
+  role = aws_iam_role.this.id
+
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Action" : [
+          "s3:GetObject"
+        ],
+        "Resource" : [
+          "arn:aws:s3:::aws-ssm-*/*",
+          "arn:aws:s3:::aws-windows-downloads-*/*",
+          "arn:aws:s3:::amazon-ssm-*/*",
+          "arn:aws:s3:::amazon-ssm-packages-*/*",
+          "arn:aws:s3:::*-birdwatcher-prod/*",
+          "arn:aws:s3:::aws-ssm-distributor-file-*/*",
+          "arn:aws:s3:::aws-ssm-document-attachments-*/*",
+          "arn:aws:s3:::patch-baseline-snapshot-*/*"
+        ],
+        "Effect" : "Allow"
+      }
+    ]
+  })
 }
 
 resource "aws_iam_role_policy_attachment" "ssm_core" {
   role       = aws_iam_role.this.id
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+# ---------- Security Group ----------
+resource "aws_security_group" "this" {
+  name        = "${local.resprefix}-host-custom-sg"
+  description = "Allow only outbound traffic"
+  vpc_id      = var.vpc.id
+
+  ingress {
+    description = "TLS from VPC"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc.cidr_block]
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  tags = var.tags
 }

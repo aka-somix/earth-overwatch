@@ -61,7 +61,7 @@ resource "aws_security_group" "vpc_outbound_requests" {
   name = "${local.resprefix}-outbound-to-vpc"
 
   vpc_id = data.aws_vpc.rfa_labs.id
-  ingress {
+  egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"

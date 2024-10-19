@@ -51,6 +51,36 @@ module "wildfire_apigw" {
 #
 # --- LAMBDA MICRO-SERVICES ---
 #
+module "lambda_service_geo" {
+  source = "./tf-modules/lambda-node-api-service"
+
+  function_name                = "${local.resprefix}-geo-service"
+  architectures                = ["arm64"]
+  handler                      = "dist/index.handler"
+  source_code_folder           = "./api-services/geo"
+  lambda_service_resource_path = "geo"
+  memory_size                  = 256
+  timeout                      = 5
+  logs_retention_days          = 30
+  apigw_rest_api               = module.wildfire_apigw.api
+  lambda_packages_bucket       = var.s3_bucket_lambda_packages
+
+  # VPC Config
+  vpc = {
+    enabled            = true
+    security_group_ids = var.lambda_security_group_ids
+    subnet_ids         = var.subnet_ids
+  }
+
+  # 
+  env_vars = {
+    "BASE_PATH"       = "geo"
+    "DATABASE_URL"    = module.geodb.cluster.endpoint
+    "DATABASE_SECRET" = module.geodb.credentials.id
+  }
+}
+
+
 module "lambda_service_monitor" {
   source = "./tf-modules/lambda-node-api-service"
 

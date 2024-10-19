@@ -32,7 +32,6 @@ app.use((err: unknown, req: express.Request, res: express.Response, next: expres
   res.status(500).send({ message: "Internal Server Error :(" });
 });
 
-
 const serverlessHandler = serverless(app);
 
 

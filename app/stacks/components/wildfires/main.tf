@@ -118,7 +118,7 @@ module "lambda_service_feedback" {
 
   # 
   env_vars = {
-    "BASE_PATH"       = "events"
+    "BASE_PATH"       = "feedback"
     "DATABASE_URL"    = module.wildfires_database.cluster.endpoint
     "DATABASE_SECRET" = module.wildfires_database.credentials.id
   }

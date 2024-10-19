@@ -1,0 +1,120 @@
+openapi: 3.0.3
+info:
+  title: Municipalities of Italy API
+  description: API to retrieve information on municipalities, provinces, and regions of Italy.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api
+
+paths:
+  /municipalities:
+    get:
+      summary: Get municipalities by region
+      description: Retrieve all municipalities within a specified region.
+      parameters:
+        - name: region
+          in: query
+          description: ID of the region to retrieve municipalities from.
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: List of municipalities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Municipality'
+        400:
+          description: Invalid region ID
+        404:
+          description: No municipalities found for the given region
+
+  /municipalities/{id}:
+    get:
+      summary: Get municipality by ID
+      description: Retrieve the details of a specific municipality.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the municipality to retrieve.
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Municipality details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Municipality'
+        404:
+          description: Municipality not found
+
+  /regions:
+    get:
+      summary: Get all regions
+      description: Retrieve a list of all regions in Italy.
+      responses:
+        200:
+          description: List of regions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Region'
+
+  /regions/{id}:
+    get:
+      summary: Get region by ID
+      description: Retrieve the details of a specific region.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the region to retrieve.
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Region details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Region'
+        404:
+          description: Region not found
+
+components:
+  schemas:
+    Municipality:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier of the municipality
+        name:
+          type: string
+          description: Name of the municipality
+        region:
+          type: string
+          description: The region the municipality belongs to
+        boundaries:
+          type: object
+          description: Geographical boundaries of the municipality (MultiPolygon in SRID 4326)
+
+    Region:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier of the region
+        name:
+          type: string
+          description: Name of the region
+        boundaries:
+          type: object
+          description: Geographical boundaries of the region (MultiPolygon in SRID 4326)
