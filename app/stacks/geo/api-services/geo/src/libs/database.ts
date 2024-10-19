@@ -4,7 +4,7 @@ import { ENV, PG_DATABASE, PG_HOST, PG_PASSWORD, PG_USER } from "../config";
 import { logger } from "../libs/powertools";
 
 import { getSecret } from "@aws-lambda-powertools/parameters/secrets";
-import { PG_CREDENTIALS } from "../config";
+import { DATABASE_SECRET } from "../config";
 
 
 type AWSSecret = {
@@ -24,14 +24,12 @@ let client: NodePgDatabase | null = null;
 
 
 const getDbSecret = async (): Promise<AWSSecret> => {
-  const secret = (await getSecret(PG_CREDENTIALS)) as string;
+  const secret = (await getSecret(DATABASE_SECRET)) as string;
 
   return JSON.parse(secret) as AWSSecret;
 };
 
 export const getDbClient = async (): Promise<NodePgDatabase> => {
-  try {
-
     // Shortcut if the client is already initialized
     if (client !== null) {
       return client;
@@ -67,9 +65,5 @@ export const getDbClient = async (): Promise<NodePgDatabase> => {
     client = drizzle(new Pool(poolConfig));
 
     logger.info("Connection to database enstablished");
-    return client;
-
-  } catch (error) {
-    throw new Error("DB Connection ERROR");
-  }
+  return client;
 };

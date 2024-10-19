@@ -17,6 +17,7 @@ dependency "network" {
     rfa_labs_dmz_subnets = {ids = ["mock"]}
     inbound_from_vpc_sg_id = "string"
     outbound_to_vpc_sg_id = "string"
+    outbound_to_everywhere_sg_id = "string"
   }
 }
 
@@ -38,6 +39,7 @@ inputs = {
   ]
 
   lambda_security_group_ids = [
-    dependency.network.outputs.outbound_to_vpc_sg_id
+    dependency.network.outputs.outbound_to_vpc_sg_id,
+    dependency.network.outputs.outbound_to_everywhere_sg_id
   ]
 }

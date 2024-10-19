@@ -21,3 +21,8 @@ output "inbound_from_vpc_sg_id" {
 output "outbound_to_vpc_sg_id" {
   value = aws_security_group.vpc_outbound_requests.id
 }
+
+output "outbound_to_everywhere_sg_id" {
+  value = aws_security_group.everywhere_outbound_requests.id
+}
+

@@ -99,7 +99,7 @@ module "lambda_service_geo" {
   env_vars = {
     "BASE_PATH"       = "geo"
     "DATABASE_URL"    = module.geodb.cluster.endpoint
-    "DATABASE_SECRET" = module.geodb.credentials.id
+    "DATABASE_SECRET" = module.geodb.credentials.name
   }
 }
 
@@ -136,7 +136,7 @@ module "lambda_service_monitor" {
   env_vars = {
     "BASE_PATH"       = "monitor"
     "DATABASE_URL"    = module.geodb.cluster.endpoint
-    "DATABASE_SECRET" = module.geodb.credentials.id
+    "DATABASE_SECRET" = module.geodb.credentials.name
   }
 }
 resource "aws_iam_role_policy_attachment" "monitor_db_credentials_access" {
