@@ -37,6 +37,27 @@ resource "aws_security_group" "inbound_requests" {
   }
 }
 
+# Policy for accessing credentials
+resource "aws_iam_policy" "access_db_credentials" {
+  name        = "${local.resprefix}-access-credentials"
+  description = "Policy to allow access to retrieve and decrypt GEO DB credentials"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "kms:Decrypt"
+        ]
+        Effect   = "Allow"
+        Resource = "${module.geodb.credentials.arn}"
+      }
+    ]
+  })
+}
+
+
 #
 # --- API Gateway for COMPONENT ---
 #
@@ -51,6 +72,8 @@ module "wildfire_apigw" {
 #
 # --- LAMBDA MICRO-SERVICES ---
 #
+
+# [START] GEO SERVICE
 module "lambda_service_geo" {
   source = "./tf-modules/lambda-node-api-service"
 
@@ -80,7 +103,14 @@ module "lambda_service_geo" {
   }
 }
 
+resource "aws_iam_role_policy_attachment" "geo_db_credentials_access" {
+  policy_arn = aws_iam_policy.access_db_credentials.arn
+  role       = module.lambda_service_geo.iam_role.id
+}
+# [END] GEO SERVICE
 
+
+# [START] MONITOR SERVICE
 module "lambda_service_monitor" {
   source = "./tf-modules/lambda-node-api-service"
 
@@ -105,7 +135,13 @@ module "lambda_service_monitor" {
   # 
   env_vars = {
     "BASE_PATH"       = "monitor"
-    "DATABASE_URL"    = ""
-    "DATABASE_SECRET" = ""
+    "DATABASE_URL"    = module.geodb.cluster.endpoint
+    "DATABASE_SECRET" = module.geodb.credentials.id
   }
 }
+resource "aws_iam_role_policy_attachment" "monitor_db_credentials_access" {
+  policy_arn = aws_iam_policy.access_db_credentials.arn
+  role       = module.lambda_service_monitor.iam_role.id
+}
+# [END] MONITOR SERVICE
+
