@@ -1,7 +1,6 @@
 
 ## secrets manager configuration
 
-# secrets manager for Valorizzatore Performing db rds
 resource "aws_secretsmanager_secret" "this_credentials" {
   name = "${var.cluster_name}-credentials"
 

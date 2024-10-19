@@ -1,4 +1,4 @@
-resource "aws_api_gateway_deployment" "wildfire" {
+resource "aws_api_gateway_deployment" "this" {
   rest_api_id = module.wildfire_apigw.api.id
 
   triggers = {
@@ -12,12 +12,12 @@ resource "aws_api_gateway_deployment" "wildfire" {
 
   depends_on = [
     module.lambda_service_monitor,
-    module.lambda_service_geo
+    module.lambda_service_geo,
   ]
 }
 
 resource "aws_api_gateway_stage" "env" {
-  deployment_id = aws_api_gateway_deployment.wildfire.id
+  deployment_id = aws_api_gateway_deployment.this.id
   rest_api_id   = module.wildfire_apigw.api.id
   stage_name    = var.env
 }

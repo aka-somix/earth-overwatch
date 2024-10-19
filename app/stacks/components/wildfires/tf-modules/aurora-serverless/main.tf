@@ -22,6 +22,10 @@ resource "aws_rds_cluster" "this" {
     min_capacity = var.min_capacity
   }
 
+
+  # Parameter Group
+  db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.this.name
+
   tags = var.tags
 }
 
@@ -39,4 +43,20 @@ resource "aws_rds_cluster_instance" "this_instance_readwrite" {
 resource "aws_db_subnet_group" "this_rds" {
   name       = "${var.cluster_name}-rds-sub-group"
   subnet_ids = var.database_subnets_ids
+}
+
+resource "aws_rds_cluster_parameter_group" "this" {
+  name        = "${var.cluster_name}-parametergroup"
+  family      = "aurora-postgresql15"
+  description = "RDS Cluster Parameter Group for ${var.cluster_name} Aurora database"
+
+  parameter {
+    name  = "rds.force_ssl"
+    value = "1"
+  }
+
+  parameter {
+    name  = "wal_sender_timeout"
+    value = "0"
+  }
 }

@@ -14,6 +14,6 @@ export type Region = {
     /**
      * Geographical boundaries of the region (MultiPolygon in SRID 4326)
      */
-    boundaries?: Record<string, any>;
+    boundaries?: any
 };
 

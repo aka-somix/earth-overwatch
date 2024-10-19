@@ -5,6 +5,7 @@ import { geometry, integer, PgSelect, pgTable, serial, varchar } from "drizzle-o
 import { and, eq } from "drizzle-orm";
 import { MunFilters, Municipality } from "../@types";
 import { regionDb } from "./Region";
+import { customGeometry } from "../libs/database";
 
 
 /**
@@ -14,7 +15,7 @@ const municipalityDb = pgTable('municipality', {
     id: serial('id').primaryKey(),
     name: varchar('name', { length: 255 }).notNull(),
     idRegion: integer('id_region').notNull(),
-    area: geometry('area', { type: 'MultiPolygon', srid: 4326 }).notNull(),
+    boundaries: customGeometry('boundaries').notNull()
 });
 
 
@@ -57,7 +58,7 @@ export class MunicipalityDAO {
             return {
                 id: m.id,
                 name: m.name,
-                boundaries: m.area
+                boundaries: m.boundaries
             }
         });
     }
@@ -79,7 +80,7 @@ export class MunicipalityDAO {
             id: m.municipality.id,
             name: m.municipality.name,
             region: m.region?.name ?? 'Unknown Region',
-            boundaries: m.municipality.area
+            boundaries: m.municipality.boundaries
         }
     }
 }

@@ -50,4 +50,4 @@ export const PG_PASSWORD = process.env.PG_PASSWORD;
 export const PG_DATABASE = process.env.PG_DATABASE;
 
 // DATABASE CREDENTIALS
-export const PG_CREDENTIALS = process.env.PG_CREDENTIALS ?? 'not-set';
+export const DATABASE_SECRET = process.env.DATABASE_SECRET ?? 'not-set';

@@ -2,6 +2,7 @@ import { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { Region } from "../@types";
 import { geometry, pgTable, serial, varchar } from "drizzle-orm/pg-core";
 import { and, eq } from "drizzle-orm";
+import { customGeometry } from "../libs/database";
 
 
 /**
@@ -10,7 +11,7 @@ import { and, eq } from "drizzle-orm";
 export const regionDb = pgTable('region', {
     id: serial('id').primaryKey(),
     name: varchar("name", { length: 255 }).notNull(),
-    area: geometry('area', { type: 'geometry', srid: 4326 }).notNull(),
+    boundaries: customGeometry('boundaries').notNull()
 });
 
 /**
@@ -36,7 +37,7 @@ export class RegionDAO {
             return {
                 id: r.id,
                 name: r.name,
-                boundaries: r.area
+                boundaries: r.boundaries
             }
         })
     }
@@ -57,7 +58,7 @@ export class RegionDAO {
         return {
             id: region.id,
             name: region.name,
-            boundaries: region.area
+            boundaries: region.boundaries
         }
     }
 }

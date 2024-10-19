@@ -18,6 +18,6 @@ export type Municipality = {
     /**
      * Geographical boundaries of the municipality (MultiPolygon in SRID 4326)
      */
-    boundaries?: Record<string, any>;
+    boundaries?: any
 };
 
