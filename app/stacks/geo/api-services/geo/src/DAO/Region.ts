@@ -1,64 +1,53 @@
-import { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { Region } from "../@types";
-import { geometry, pgTable, serial, varchar } from "drizzle-orm/pg-core";
-import { and, eq } from "drizzle-orm";
-import { customGeometry } from "../libs/database";
-
-
-/**
- * DATABASE ENTITIES
- */
-export const regionDb = pgTable('region', {
-    id: serial('id').primaryKey(),
-    name: varchar("name", { length: 255 }).notNull(),
-    boundaries: customGeometry('boundaries').notNull()
-});
+import { Region, RegionDB } from "../@types";
+import { customGeometry, executeQuery } from '../database/client'; // Import the db client and helpers
 
 /**
  * DATA ACCESS OBJECT
  */
 export class RegionDAO {
-
-    client: NodePgDatabase
-
-    constructor(client: NodePgDatabase) {
-        this.client = client
-    }
-
     public async getRegions(): Promise<Array<Region>> {
+        // SQL query to get all regions with PostGIS boundary data
+        const query = `
+            SELECT id, name, ${customGeometry.toGeoJSON('boundaries')} AS boundaries
+            FROM region;
+        `;
 
-        let queryBuilder = this.client
-            .select()
-            .from(regionDb)
+        // Execute the query and get the result
+        const regions: RegionDB[] = await executeQuery(query);
 
-        const regions = await queryBuilder;
-
+        // Map the result to the expected Region type
         return regions.map((r) => {
             return {
                 id: r.id,
                 name: r.name,
                 boundaries: r.boundaries
-            }
-        })
+            };
+        });
     }
 
     public async getRegionByID(id: number): Promise<Region | null> {
+        // SQL query to get a single region by its ID
+        const query = `
+            SELECT id, name, ${customGeometry.toGeoJSON('boundaries')} AS boundaries
+            FROM region
+            WHERE id = $1
+            LIMIT 1;
+        `;
 
+        // Execute the query with the provided ID
+        const result: RegionDB[] = await executeQuery(query, [id]);
 
-        const regionFound = await this.client
-            .select()
-            .from(regionDb)
-            .where(eq(regionDb.id, id))
-            .limit(1);
+        // Check if any region was found
+        if (result.length === 0) {
+            return null;
+        }
 
-        if (regionFound.length === 0) return null;
-
-        const region = regionFound[0];
-
+        // Extract the region from the result and return it
+        const region = result[0];
         return {
             id: region.id,
             name: region.name,
             boundaries: region.boundaries
-        }
+        };
     }
 }

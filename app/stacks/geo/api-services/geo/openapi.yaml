@@ -3,8 +3,6 @@ info:
   title: Municipalities of Italy API
   description: API to retrieve information on municipalities, provinces, and regions of Italy.
   version: 1.0.0
-servers:
-  - url: http://localhost:8080/api
 
 paths:
   /municipalities:

@@ -1,86 +1,88 @@
-
-import { NodePgDatabase } from "drizzle-orm/node-postgres";
-
-import { geometry, integer, PgSelect, pgTable, serial, varchar } from "drizzle-orm/pg-core";
-import { and, eq } from "drizzle-orm";
-import { MunFilters, Municipality } from "../@types";
-import { regionDb } from "./Region";
-import { customGeometry } from "../libs/database";
-
-
+import { Municipality, MunFilters } from "../@types";
+import { customGeometry, executeQuery } from "../database/client";
+import { logger } from "../libs/powertools";
 /**
  * DATABASE ENTITIES
  */
-const municipalityDb = pgTable('municipality', {
-    id: serial('id').primaryKey(),
-    name: varchar('name', { length: 255 }).notNull(),
-    idRegion: integer('id_region').notNull(),
-    boundaries: customGeometry('boundaries').notNull()
-});
-
+const municipalityTable = 'municipality';
+const regionTable = 'region';
 
 /**
  * DATA ACCESS OBJECT
  */
 export class MunicipalityDAO {
 
-    client: NodePgDatabase
-
-    constructor(client: NodePgDatabase) {
-        this.client = client
-    }
-
-    private parseFilters<T extends PgSelect>(qb: T, filters: MunFilters): T {
-        const conditions = []
+    /**
+     * Helper method to parse filters and dynamically build the WHERE clause
+     */
+    private parseFilters(filters: MunFilters): { query: string, params: any[] } {
+        let conditions: string[] = [];
+        let params: any[] = [];
 
         if (filters.idRegion) {
-            conditions.push(eq(municipalityDb.idRegion, filters.idRegion))
+            conditions.push(`id_region = $${params.length + 1}`);
+            params.push(filters.idRegion);
         }
 
-        if (conditions.length > 0) {
-            qb = qb.where(and(...conditions));
-        }
-        return qb;
+        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+        return { query: whereClause, params };
     }
 
-    public async getMunicipalities(filters: any): Promise<Array<Municipality>> {
+    /**
+     * Get municipalities based on filters
+     */
+    public async getMunicipalities(filters: MunFilters): Promise<Array<Municipality>> {
 
-        let queryBuilder = this.client
-            .select()
-            .from(municipalityDb)
-            .$dynamic()
+        // Build the dynamic WHERE clause
+        const { query: whereClause, params } = this.parseFilters(filters);
 
-        queryBuilder = this.parseFilters(queryBuilder, filters);
+        // SQL query
+        const query = `
+            SELECT id, name, ${customGeometry.toGeoJSON('boundaries')} AS boundaries
+            FROM ${municipalityTable}
+            ${whereClause};
+        `;
 
-        const munFound = await queryBuilder;
+        logger.info(`QUERY: ${query}`)
 
-        return munFound.map((m) => {
-            return {
-                id: m.id,
-                name: m.name,
-                boundaries: m.boundaries
-            }
-        });
+        // Execute the query
+        const munFound = await executeQuery(query, params);
+
+        // Map the result to the Municipality type
+        return munFound.map((m) => ({
+            id: m.id,
+            name: m.name,
+            boundaries: m.boundaries,
+        }));
     }
 
+    /**
+     * Get municipality by ID, with a left join to regions table
+     */
     public async getMunicipalityByID(id: number): Promise<Municipality | null> {
+        const query = `
+            SELECT m.id AS "municipalityId", m.name AS "municipalityName", 
+                   r.name AS "regionName", ${customGeometry.toGeoJSON('m.boundaries')} AS boundaries
+            FROM ${municipalityTable} m
+            LEFT JOIN ${regionTable} r ON r.id = m.id_region
+            WHERE m.id = $1
+            LIMIT 1;
+        `;
 
-        const dbResult = await this.client
-            .select()
-            .from(municipalityDb)
-            .leftJoin(regionDb, eq(regionDb.id, municipalityDb.idRegion))
-            .where(eq(municipalityDb.id, id))
-            .limit(1);
+        // Execute the query
+        const dbResult = await executeQuery(query, [id]);
 
+        // Check if municipality was found
         if (dbResult.length === 0) return null;
 
         const m = dbResult[0];
 
+        // Return the mapped Municipality object
         return {
-            id: m.municipality.id,
-            name: m.municipality.name,
-            region: m.region?.name ?? 'Unknown Region',
-            boundaries: m.municipality.boundaries
-        }
+            id: m.municipalityId,
+            name: m.municipalityName,
+            region: m.regionName ?? 'Unknown Region',
+            boundaries: m.boundaries,
+        };
     }
 }

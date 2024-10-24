@@ -1,6 +1,6 @@
 import { Request, Response, Router } from "express";
 import { logger } from '../libs/powertools';
-import { getDbClient } from "../libs/database";
+import { getDbClient } from "../database/client";
 import { RegionDAO } from "../DAO/Region";
 import { MunFilters } from "../@types";
 import { MunicipalityDAO } from "../DAO/Municipality";
@@ -9,14 +9,11 @@ const router = Router();
 /**
  * TODO Docs here
  */
-router.get("/regions/", async (req: Request, res: Response) => {
+router.get("/regions", async (req: Request, res: Response) => {
     try {
         logger.info(`Processing ${req.method} Request for path: ${req.path}`);
 
-        // TODO: This should be put somewhere else
-        const db = await getDbClient();
-
-        const regions = await new RegionDAO(db).getRegions();
+        const regions = await new RegionDAO().getRegions();
 
         // RESPONSE
         logger.info(`Processed ${req.method} Request for path: ${req.path}`);
@@ -39,10 +36,7 @@ router.get("/regions/:id", async (req: Request, res: Response) => {
 
         const idNumeric = parseInt(id);
 
-        // TODO: This should be put somewhere else
-        const db = await getDbClient();
-
-        const regionFound = await new RegionDAO(db).getRegionByID(idNumeric);
+        const regionFound = await new RegionDAO().getRegionByID(idNumeric);
 
         if (regionFound === null) {
             res.status(404).json({
@@ -62,20 +56,19 @@ router.get("/regions/:id", async (req: Request, res: Response) => {
     }
 });
 
-router.get("/municipalities/", async (req: Request, res: Response) => {
+/**
+ * TODO Docs here
+ */
+router.get("/municipalities", async (req: Request, res: Response) => {
     try {
-        logger.info(`Processing ${req.method} Request for path: ${req.path}`);
+        const { region } = req.query;
 
-        const { region } = req.params;
+        const filters: MunFilters = {}
 
-        const filters: MunFilters = {
-            idRegion: parseInt(region)
-        }
+        // add Region filter
+        if (region !== undefined) filters.idRegion = parseInt(region as string)
 
-        // TODO: This should be put somewhere else
-        const db = await getDbClient();
-
-        const response = await new MunicipalityDAO(db).getMunicipalities(filters);
+        const response = await new MunicipalityDAO().getMunicipalities(filters);
 
         // RESPONSE
         logger.info(`Processed ${req.method} Request for path: ${req.path}`);
@@ -87,6 +80,9 @@ router.get("/municipalities/", async (req: Request, res: Response) => {
     }
 });
 
+/**
+ * TODO Docs here
+ */
 router.get("/municipalities/:id", async (req: Request, res: Response) => {
     try {
         logger.info(`Processing ${req.method} Request for path: ${req.path}`);
@@ -95,10 +91,7 @@ router.get("/municipalities/:id", async (req: Request, res: Response) => {
 
         const idNumeric = parseInt(id);
 
-        // TODO: This should be put somewhere else
-        const db = await getDbClient();
-
-        const response = await new MunicipalityDAO(db).getMunicipalityByID(idNumeric);
+        const response = await new MunicipalityDAO().getMunicipalityByID(idNumeric);
 
         if (response === null) {
             res.status(404).json({
