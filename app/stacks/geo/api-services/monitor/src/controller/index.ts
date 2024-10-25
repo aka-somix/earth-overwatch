@@ -1,6 +1,5 @@
 import { Request, Response, Router } from "express";
 import { logger } from '../libs/powertools';
-import { getDbClient } from "../libs/database";
 import { Monitor } from "../@types";
 import { MonitorDAO } from "../DAO/Monitor";
 const router = Router();
@@ -9,7 +8,7 @@ const router = Router();
  * POST /monitors
  * Creates a new monitor for a specific municipality with a specified type of monitoring.
  */
-router.post("/monitors", async (req: Request, res: Response) => {
+router.post("/", async (req: Request, res: Response) => {
     try {
         logger.info(`Processing ${req.method} Request for path: ${req.path}`);
 
@@ -29,13 +28,9 @@ router.post("/monitors", async (req: Request, res: Response) => {
             });
         }
 
-        // Get database client
-        const db = await getDbClient();
-
         // Add monitor
-        const monitor = await new MonitorDAO(db).createMonitor({
+        const monitor = await new MonitorDAO().createMonitor({
             idMunicipality,
-            type,
             requestedBy: apikey,
         });
 
@@ -52,15 +47,13 @@ router.post("/monitors", async (req: Request, res: Response) => {
  * GET /monitors
  * Returns all monitors, with optional filters for municipality or type.
  */
-router.get("/monitors", async (req: Request, res: Response) => {
+router.get("/", async (req: Request, res: Response) => {
     try {
         logger.info(`Processing ${req.method} Request for path: ${req.path}`);
 
         const { idMunicipality, type } = req.query;
 
-        // Get database client
-        const db = await getDbClient();
-
+        // Build Filters
         const filters: any = {};
         if (idMunicipality) {
             filters.idMunicipality = parseInt(idMunicipality as string);
@@ -70,7 +63,7 @@ router.get("/monitors", async (req: Request, res: Response) => {
         }
 
         // Fetch monitors
-        const monitors = await new MonitorDAO(db).getMonitors(filters);
+        const monitors = await new MonitorDAO().getMonitors(filters);
 
         logger.info(`Processed ${req.method} Request for path: ${req.path}`);
         res.status(200).json(monitors);
@@ -85,7 +78,7 @@ router.get("/monitors", async (req: Request, res: Response) => {
  * DELETE /monitors/:id
  * Deletes an existing monitor by ID.
  */
-router.delete("/monitors/:id", async (req: Request, res: Response) => {
+router.delete("/:id", async (req: Request, res: Response) => {
     try {
         logger.info(`Processing ${req.method} Request for path: ${req.path}`);
 
@@ -93,11 +86,8 @@ router.delete("/monitors/:id", async (req: Request, res: Response) => {
 
         const idNumeric = parseInt(id);
 
-        // Get database client
-        const db = await getDbClient();
-
         // Delete monitor
-        const deleteResult = await new MonitorDAO(db).deleteMonitor(idNumeric);
+        const deleteResult = await new MonitorDAO().deleteMonitor(idNumeric);
 
         if (!deleteResult) {
             return res.status(404).json({

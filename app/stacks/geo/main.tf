@@ -118,7 +118,7 @@ module "lambda_service_monitor" {
   architectures                = ["arm64"]
   handler                      = "dist/index.handler"
   source_code_folder           = "./api-services/monitor"
-  lambda_service_resource_path = "monitor"
+  lambda_service_resource_path = "monitoring"
   memory_size                  = 256
   timeout                      = 5
   logs_retention_days          = 30
@@ -134,7 +134,7 @@ module "lambda_service_monitor" {
 
   # 
   env_vars = {
-    "BASE_PATH"       = "monitor"
+    "BASE_PATH"       = "monitoring"
     "DATABASE_URL"    = module.geodb.cluster.endpoint
     "DATABASE_SECRET" = module.geodb.credentials.name
   }

@@ -5,7 +5,7 @@ info:
   version: 1.0.0
 
 paths:
-  /municipalities:
+  /geo/municipalities:
     get:
       summary: Get municipalities by region
       description: Retrieve all municipalities within a specified region.
@@ -30,7 +30,7 @@ paths:
         404:
           description: No municipalities found for the given region
 
-  /municipalities/{id}:
+  /geo/municipalities/{id}:
     get:
       summary: Get municipality by ID
       description: Retrieve the details of a specific municipality.
@@ -51,7 +51,7 @@ paths:
         404:
           description: Municipality not found
 
-  /regions:
+  /geo/regions:
     get:
       summary: Get all regions
       description: Retrieve a list of all regions in Italy.
@@ -65,7 +65,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Region'
 
-  /regions/{id}:
+  /geo/regions/{id}:
     get:
       summary: Get region by ID
       description: Retrieve the details of a specific region.

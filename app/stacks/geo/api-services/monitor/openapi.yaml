@@ -5,7 +5,7 @@ info:
   version: 1.0.0
 
 paths:
-  /monitors:
+  /monitoring:
     post:
       summary: Create a new monitor
       description: Creates a new monitor for a specific municipality with a specific type of monitoring.
@@ -57,7 +57,7 @@ paths:
         500:
           description: Internal server error
 
-  /monitors/{monitorId}:
+  /monitoring/{monitorId}:
     delete:
       summary: Remove a monitor
       description: Deletes an existing monitor identified by the monitor ID.
