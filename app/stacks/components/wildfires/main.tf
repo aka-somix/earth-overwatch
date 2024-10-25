@@ -107,7 +107,7 @@ module "lambda_service_feedback" {
   timeout                      = 5
   logs_retention_days          = 30
   apigw_rest_api               = module.wildfire_apigw.api
-  lambda_packages_bucket       = "cicd-lambda-packages" # TODO Cambiare il bucket dei packages
+  lambda_packages_bucket       = var.s3_bucket_lambda_packages
 
   # VPC Config
   vpc = {
