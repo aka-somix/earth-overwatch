@@ -3,6 +3,11 @@ variable "env" {
   type        = string
 }
 
+variable "account_id" {
+  description = "AWS Account ID"
+  type        = string
+}
+
 variable "region" {
   description = "AWS Region"
   type        = string
@@ -33,3 +38,18 @@ variable "security_group_ids" {
 variable "lambda_security_group_ids" {
   type = list(string)
 }
+
+variable "eventrule_new_image_data_from_synth" {
+  type = object({
+    id = string
+    name = string
+  })
+}
+
+variable "dataplatform_eventbus" {
+  type = object({
+    id = string
+    name = string
+  })
+}
+

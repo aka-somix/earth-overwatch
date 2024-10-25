@@ -21,6 +21,25 @@ dependency "network" {
   }
 }
 
+dependency "events-broker" {
+  config_path = find_in_parent_folders("events-broker")
+
+  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan"]
+  mock_outputs_merge_with_state = contains(["init", "validate", "plan"], get_terraform_command()) ? true : false
+  mock_outputs = {
+    eventrule_new_image_data_from_synth = {
+      id = "mock",
+      arn = "mock",
+      name = "mock"
+    },
+    dataplatform_eventbus = {
+      id = "mock",
+      arn = "mock",
+      name = "mock"
+    },
+  }
+}
+
 inputs = {
   # module configuration variables
   account_id              = get_aws_account_id()
@@ -41,4 +60,8 @@ inputs = {
     dependency.network.outputs.outbound_to_vpc_sg_id,
     dependency.network.outputs.outbound_to_everywhere_sg_id
   ]
+
+  # EVENTS BROKER DEPENDENCIES:
+  dataplatform_eventbus                   = dependency.events-broker.outputs.dataplatform_eventbus
+  eventrule_new_image_data_from_synth = dependency.events-broker.outputs.eventrule_new_image_data_from_synth
 }
