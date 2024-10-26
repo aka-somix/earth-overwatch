@@ -12,6 +12,6 @@ output "geodb_readonlys_endpoint" {
   value = module.geodb.cluster.reader_endpoint
 }
 
-output "geodb_master_endpoint" {
-  value = module.geodb.cluster.endpoint
+output "geo_apigw_endpoint" {
+  value = aws_api_gateway_deployment.this.invoke_url
 }

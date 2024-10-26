@@ -7,6 +7,6 @@ resource "aws_cloudwatch_event_bus" "dataplatform" {
   name = "${local.resprefix}-dataplatform-broker"
 }
 
-resource "aws_cloudwatch_event_bus" "bff" {
-  name = "${local.resprefix}-bff-broker"
+resource "aws_cloudwatch_event_bus" "backend" {
+  name = "${local.resprefix}-backend-broker"
 }

@@ -9,20 +9,16 @@ this handler containing the lambda used to manage event, invoice and programs
 yarn
 ```
 
-## Available Commands
+## Expected Input
 
-### Start Local (Development) Server
-
-To run the local server, use the following command:
-
-```bash
-yarn dev
-```
-
-### Build project
-
-To generate project build:
-
-```bash
-yarn build
+In order for this Lambda Function to properly work the expected input is:
+```json
+{
+    detail-type: "synthetized/<whatever>",      # <-- <whatever> can be replaced with any string
+    detail: {
+        longitude: 13.23423,                    # <-- Longitude from the center of the image
+        latitude: 32.12313,                     # <-- Latitude from the center of the image
+        imageS3URL: "s3://your/path/to/img",    # <-- Optional, defaults to 4326
+    }
+}
 ```

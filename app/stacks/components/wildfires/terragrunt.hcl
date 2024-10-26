@@ -37,6 +37,21 @@ dependency "events-broker" {
       arn = "mock",
       name = "mock"
     },
+    backend_eventbus = {
+      id = "mock",
+      arn = "mock",
+      name = "mock"
+    },
+  }
+}
+
+dependency "geo" {
+  config_path = find_in_parent_folders("geo")
+
+  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan"]
+  mock_outputs_merge_with_state = contains(["init", "validate", "plan"], get_terraform_command()) ? true : false
+  mock_outputs = {
+    geo_apigw_endpoint = "mock"
   }
 }
 
@@ -62,6 +77,10 @@ inputs = {
   ]
 
   # EVENTS BROKER DEPENDENCIES:
-  dataplatform_eventbus                   = dependency.events-broker.outputs.dataplatform_eventbus
+  dataplatform_eventbus               = dependency.events-broker.outputs.dataplatform_eventbus
+  backend_eventbus                    = dependency.events-broker.outputs.backend_eventbus
   eventrule_new_image_data_from_synth = dependency.events-broker.outputs.eventrule_new_image_data_from_synth
+
+  # GEO MODULE DEPENDENICES:
+  geo_apigw_endpoint = dependency.geo.outputs.geo_apigw_endpoint
 }

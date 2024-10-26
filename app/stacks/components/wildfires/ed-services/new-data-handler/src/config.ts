@@ -40,5 +40,9 @@ export const AWS_REGION = process.env.AWS_REGION ?? "eu-west-1";
 
 export const LOG_LEVEL = (process.env.LOG_LEVEL ?? "INFO") as LogLevel;
 
-// Base path of this service
-export const BASE_PATH = process.env.BASE_PATH ?? "/main";
+// API CONFIG
+export const MONITORING_API_BASE_PATH = process.env.MONITORING_API_BASE_PATH ?? 'localhost';
+export const API_KEY = process.env.API_KEY ?? 'not-set';
+
+// EVENTBUS CONFIG
+export const EVENT_BUS_NAME = process.env.EVENT_BUS_NAME ?? 'not-set';

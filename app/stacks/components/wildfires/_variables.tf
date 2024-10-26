@@ -53,3 +53,15 @@ variable "dataplatform_eventbus" {
   })
 }
 
+variable "backend_eventbus" {
+  type = object({
+    id = string
+    name = string
+    arn = string
+  })
+}
+
+variable "geo_apigw_endpoint" {
+  type = string
+  description = "Https Endpoint for calling the Geo APIGW"
+}
