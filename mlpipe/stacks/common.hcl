@@ -11,9 +11,9 @@ remote_state {
   config = {
     encrypt             = true
     bucket              = "${local.stage.env}-${local.config.project_name}-terraform-state"
-    key                 = "${path_relative_to_include()}/${local.config.repository_name}/terraform.tfstate"
+    key                 = "${path_relative_to_include()}/${local.config.repository_name}/mlpipe/terraform.tfstate"
     region              = local.config.region.primary
-    dynamodb_table      = "${local.stage.env}-${local.config.repository_name}-terraform-state"
+    dynamodb_table      = "${local.stage.env}-${local.config.repository_name}-mlpipe-terraform-state"
     s3_bucket_tags      = local.default_tags
     dynamodb_table_tags = local.default_tags
   }

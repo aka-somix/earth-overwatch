@@ -12,3 +12,7 @@ variable "project_name" {
   description = "project prefix name"
   type        = string
 }
+
+variable "account_id" {
+  type        = string
+}
