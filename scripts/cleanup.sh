@@ -10,12 +10,15 @@ API_TAG_VALUE="scrnts"  # Replace with the tag value for API Gateway
 STAGE_TAG_KEY="project"
 STAGE_TAG_VALUE="scrnts"      # Replace with the tag value for the API Gateway stage
 
+NOTEBOOK_TAG_KEY="project"
+NOTEBOOK_TAG_VALUE="scrnts"    # Replace with the tag value for SageMaker notebooks
+
 # Define colors for pretty prints
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
 CYAN='\033[0;36m'
-RESET='\033[0m's
+RESET='\033[0m'
 
 # Print a separator
 separator() {
@@ -110,6 +113,34 @@ delete_api_gateway_stages() {
     done
 }
 
+# Function to get and stop SageMaker notebooks based on tag
+stop_sagemaker_notebooks() {
+    separator
+    echo -e "${YELLOW}Retrieving SageMaker notebooks based on tag: ${NOTEBOOK_TAG_KEY}=${NOTEBOOK_TAG_VALUE}${RESET}"
+    separator
+
+    # Get the list of SageMaker notebook instances with the specified tag
+    NOTEBOOK_INSTANCE_NAMES=$(aws sagemaker list-notebook-instances \
+        --query "NotebookInstances[?Tags[?Key=='$NOTEBOOK_TAG_KEY' && Value=='$NOTEBOOK_TAG_VALUE']].NotebookInstanceName" \
+        --output text)
+
+    if [ -z "$NOTEBOOK_INSTANCE_NAMES" ]; then
+        echo -e "${RED}No SageMaker notebooks found with tag: $NOTEBOOK_TAG_KEY=$NOTEBOOK_TAG_VALUE${RESET}"
+    else
+        echo -e "${GREEN}Found SageMaker notebook instances: $NOTEBOOK_INSTANCE_NAMES${RESET}"
+        for NOTEBOOK_INSTANCE_NAME in $NOTEBOOK_INSTANCE_NAMES; do
+            echo -e "${YELLOW}Stopping SageMaker notebook: $NOTEBOOK_INSTANCE_NAME${RESET}"
+            aws sagemaker stop-notebook-instance --notebook-instance-name $NOTEBOOK_INSTANCE_NAME > /dev/null
+
+            if [ $? -eq 0 ]; then
+                echo -e "${GREEN}Successfully stopped SageMaker notebook: $NOTEBOOK_INSTANCE_NAME${RESET}"
+            else
+                echo -e "${RED}Failed to stop SageMaker notebook: $NOTEBOOK_INSTANCE_NAME${RESET}"
+            fi
+        done
+    fi
+}
+
 # Main execution
 separator
 echo -e "${CYAN}Starting the script to manage AWS resources...${RESET}"
@@ -120,6 +151,7 @@ get_api_ids_and_stage_names
 
 stop_ec2_instances
 delete_api_gateway_stages
+stop_sagemaker_notebooks
 
 separator
 echo -e "${CYAN}All operations completed successfully!${RESET}"
