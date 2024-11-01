@@ -3,38 +3,39 @@ locals {
 }
 
 #
-# --- SAGE MAKER MODEL
+# --- SAGEMAKER TRAINING JOB ---
 #
-resource "aws_sagemaker_model" "landfill_detection" {
-  name          = "${local.resprefix}-detection-ai-model"
-  execution_role_arn = aws_iam_role.landfill_sagemaker_execution_role.arn
-  primary_container {
-    image        = "" # TODO understand this part
-    model_data_url = "" # TODO understand this part as well
-  }
-}
+# resource "aws_sagemaker_training_job" "yolo_training_job" {
+#   name     = "yolo-training-job"
+#   role_arn = aws_iam_role.sagemaker_execution_role.arn
+#   algorithm_specification {
+#     training_image      = "763104351884.dkr.ecr.us-west-2.amazonaws.com/yolov5-training:latest" # Update with the actual YOLO image
+#     training_input_mode = "File"
+#   }
 
-resource "aws_iam_role" "landfill_sagemaker_execution_role" {
-  name = "${local.resprefix}-sagemaker-execrole"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Effect    = "Allow",
-      Principal = { Service = "sagemaker.amazonaws.com" },
-      Action    = "sts:AssumeRole"
-    }]
-  })
-}
-resource "aws_iam_role_policy" "landfill_sagemaker_s3_access" {
-  role   = aws_iam_role.landfill_sagemaker_execution_role.name
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect   = "Allow",
-        Action   = ["s3:GetObject"],
-        Resource = "${var.ai_models_bucket}/*"
-      }
-    ]
-  })
-}
+#   resource_config {
+#     instance_type     = "ml.p3.2xlarge" # Change based on your training needs
+#     instance_count    = 1
+#     volume_size_in_gb = 50
+#   }
+
+#   stopping_condition {
+#     max_runtime_in_seconds = 86400
+#   }
+
+#   input_data_config {
+#     channel_name = "training"
+#     data_source {
+#       s3_data_source {
+#         s3_data_type              = "S3Prefix"
+#         s3_uri                    = "s3://${aws_s3_bucket.yolo_data_bucket.bucket}/training-data/"
+#         s3_data_distribution_type = "FullyReplicated"
+#       }
+#     }
+#   }
+
+#   output_data_config {
+#     s3_output_path = "s3://${aws_s3_bucket.yolo_data_bucket.bucket}/model-artifacts"
+#   }
+
+# }

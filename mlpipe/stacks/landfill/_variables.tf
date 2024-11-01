@@ -14,12 +14,5 @@ variable "project_name" {
 }
 
 variable "account_id" {
-  type        = string
-}
-
-variable "ai_models_bucket" {
-  type = object({
-    name = string
-    arn = string
-  })
+  type = string
 }

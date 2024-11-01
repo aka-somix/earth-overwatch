@@ -51,3 +51,6 @@ Thumbs.db
 
 .terragrunt-cache
 .terraform
+
+.local_dataset
+.env
