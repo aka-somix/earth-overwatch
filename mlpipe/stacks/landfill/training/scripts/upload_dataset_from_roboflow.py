@@ -17,7 +17,7 @@ ROBOFLOW_PROJECT = os.getenv("ROBOFLOW_PROJECT")
 S3_DATASET_PATH = os.getenv(
     "S3_DATASET_PATH"
 )  # <- Path like: s3://bucket/path/to/dataset/
-LOCAL_DATASET_PATH = f"./.local_dataset/v{VERSION}/"
+LOCAL_DATASET_PATH = f".local_dataset/v{VERSION}/"
 #
 # STEP 1: Download Dataset version from ROBOFLOW
 #

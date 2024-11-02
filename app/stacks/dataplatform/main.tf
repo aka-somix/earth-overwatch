@@ -26,5 +26,5 @@ module "ai_models_bucket" {
 resource "aws_ssm_parameter" "aimodelsbucket" {
   name  = "/${var.env}/${var.project_name}/dataplat/aimodelsbucket"
   type  = "String"
-  value = module.landing_zone_bucket.name
+  value = module.ai_models_bucket.name
 }
