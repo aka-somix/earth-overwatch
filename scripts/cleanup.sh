@@ -4,14 +4,8 @@
 EC2_TAG_KEY="Name"
 EC2_TAG_VALUE="scrnts-dev-bastion-bastionhost" # Replace with the tag value for EC2
 
-API_TAG_KEY="project"
-API_TAG_VALUE="scrnts"  # Replace with the tag value for API Gateway
-
-STAGE_TAG_KEY="project"
-STAGE_TAG_VALUE="scrnts"      # Replace with the tag value for the API Gateway stage
-
-NOTEBOOK_TAG_KEY="project"
-NOTEBOOK_TAG_VALUE="scrnts"    # Replace with the tag value for SageMaker notebooks
+TAG_KEY="project"
+TAG_VALUE="scrnts"  # Replace with the tag value for API Gateway
 
 # Define colors for pretty prints
 GREEN='\033[0;32m'
@@ -38,7 +32,6 @@ get_ec2_instance_ids() {
 
     if [ -z "$EC2_INSTANCE_IDS" ]; then
         echo -e "${RED}No EC2 instances found with tag: $EC2_TAG_KEY=$EC2_TAG_VALUE${RESET}"
-        exit 1
     else
         echo -e "${GREEN}Found EC2 instance IDs: $EC2_INSTANCE_IDS${RESET}"
     fi
@@ -52,12 +45,11 @@ get_api_ids_and_stage_names() {
 
     # Retrieve the API IDs
     API_IDS=$(aws apigateway get-rest-apis \
-        --query "items[?tags.$API_TAG_KEY=='$API_TAG_VALUE'].id" \
+        --query "items[?tags.$TAG_KEY=='$TAG_VALUE'].id" \
         --output text)
 
     if [ -z "$API_IDS" ]; then
-        echo -e "${RED}No API Gateways found with tag: $API_TAG_KEY=$API_TAG_VALUE${RESET}"
-        exit 1
+        echo -e "${RED}No API Gateways found with tag: $TAG_KEY=$TAG_VALUE${RESET}"
     else
         echo -e "${GREEN}Found API Gateway IDs: $API_IDS${RESET}"
     fi
@@ -89,11 +81,11 @@ delete_api_gateway_stages() {
 
         # Retrieve stages for the current API ID
         STAGE_NAMES=$(aws apigateway get-stages --rest-api-id $API_ID \
-            --query "item[?tags.$STAGE_TAG_KEY=='$STAGE_TAG_VALUE'].stageName" \
+            --query "item[?tags.$TAG_KEY=='$TAG_VALUE'].stageName" \
             --output text)
 
         if [ -z "$STAGE_NAMES" ]; then
-            echo -e "${RED}No stages found with tag: $STAGE_TAG_KEY=$STAGE_TAG_VALUE for API Gateway $API_ID${RESET}"
+            echo -e "${RED}No stages found with tag: $TAG_KEY=$TAG_VALUE for API Gateway $API_ID${RESET}"
         else
             echo -e "${GREEN}Found stages for API Gateway $API_ID: $STAGE_NAMES${RESET}"
             for STAGE_NAME in $STAGE_NAMES; do
@@ -114,32 +106,42 @@ delete_api_gateway_stages() {
 }
 
 # Function to get and stop SageMaker notebooks based on tag
-stop_sagemaker_notebooks() {
+delete_sagemaker_notebooks() {
     separator
-    echo -e "${YELLOW}Retrieving SageMaker notebooks based on tag: ${NOTEBOOK_TAG_KEY}=${NOTEBOOK_TAG_VALUE}${RESET}"
+    echo -e "${YELLOW}Retrieving SageMaker notebooks based on tag: ${TAG_KEY}=${TAG_VALUE}${RESET}"
     separator
 
-    # Get the list of SageMaker notebook instances with the specified tag
+    # List all notebook instances
     NOTEBOOK_INSTANCE_NAMES=$(aws sagemaker list-notebook-instances \
-        --query "NotebookInstances[?Tags[?Key=='$NOTEBOOK_TAG_KEY' && Value=='$NOTEBOOK_TAG_VALUE']].NotebookInstanceName" \
+        --query "NotebookInstances[].NotebookInstanceName" \
         --output text)
 
     if [ -z "$NOTEBOOK_INSTANCE_NAMES" ]; then
-        echo -e "${RED}No SageMaker notebooks found with tag: $NOTEBOOK_TAG_KEY=$NOTEBOOK_TAG_VALUE${RESET}"
+        echo -e "${RED}No SageMaker notebooks found.${RESET}"
     else
-        echo -e "${GREEN}Found SageMaker notebook instances: $NOTEBOOK_INSTANCE_NAMES${RESET}"
         for NOTEBOOK_INSTANCE_NAME in $NOTEBOOK_INSTANCE_NAMES; do
-            echo -e "${YELLOW}Stopping SageMaker notebook: $NOTEBOOK_INSTANCE_NAME${RESET}"
-            aws sagemaker stop-notebook-instance --notebook-instance-name $NOTEBOOK_INSTANCE_NAME > /dev/null
+            # Retrieve tags for each notebook instance
+            TAGS=$(aws sagemaker list-tags --resource-arn $(aws sagemaker describe-notebook-instance --notebook-instance-name $NOTEBOOK_INSTANCE_NAME --query 'NotebookInstanceArn' --output text))
+            # Check if the tag key and value are present
+            TAG_MATCH=$(echo "$TAGS" | jq -r ".Tags[] | select(.Key==\"$TAG_KEY\" and .Value==\"$TAG_VALUE\")")
 
-            if [ $? -eq 0 ]; then
-                echo -e "${GREEN}Successfully stopped SageMaker notebook: $NOTEBOOK_INSTANCE_NAME${RESET}"
+            if [ -n "$TAG_MATCH" ]; then
+                echo -e "${YELLOW}Deleting SageMaker notebook: $NOTEBOOK_INSTANCE_NAME${RESET}"
+                aws sagemaker delete-notebook-instance --notebook-instance-name $NOTEBOOK_INSTANCE_NAME > /dev/null
+
+                if [ $? -eq 0 ]; then
+                    echo -e "${GREEN}Successfully deleted SageMaker notebook: $NOTEBOOK_INSTANCE_NAME${RESET}"
+                else
+                    echo -e "${RED}Failed to delete SageMaker notebook: $NOTEBOOK_INSTANCE_NAME${RESET}"
+                fi
             else
-                echo -e "${RED}Failed to stop SageMaker notebook: $NOTEBOOK_INSTANCE_NAME${RESET}"
+                echo -e "${CYAN}Notebook $NOTEBOOK_INSTANCE_NAME does not match the tag criteria.${RESET}"
             fi
         done
     fi
 }
+
+
 
 # Main execution
 separator
@@ -151,7 +153,7 @@ get_api_ids_and_stage_names
 
 stop_ec2_instances
 delete_api_gateway_stages
-stop_sagemaker_notebooks
+delete_sagemaker_notebooks
 
 separator
 echo -e "${CYAN}All operations completed successfully!${RESET}"
