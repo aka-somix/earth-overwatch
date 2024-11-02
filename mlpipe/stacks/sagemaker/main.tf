@@ -2,6 +2,15 @@ locals {
   resprefix = "${var.project_name}-${var.env}-sm"
 }
 
+
+
+#
+# --- S3 BUCKETS ---
+#
+data "aws_s3_bucket" "aimodelsbucket" {
+  bucket = data.aws_ssm_parameter.aimodelsbucket.insecure_value
+}
+
 #
 # --- IAM ROLE ---
 #
@@ -20,9 +29,9 @@ resource "aws_iam_role" "sagemaker_execution_role" {
   })
 }
 
-resource "aws_iam_role_policy" "sagemaker_s3_access" {
+resource "aws_iam_role_policy" "s3_custom_access" {
   role = aws_iam_role.sagemaker_execution_role.name
-  name = "s3-access"
+  name = "s3-custom-access"
 
   policy = jsonencode({
     Version = "2012-10-17",
@@ -39,6 +48,16 @@ resource "aws_iam_role_policy" "sagemaker_s3_access" {
       }
     ]
   })
+}
+
+resource "aws_iam_role_policy_attachment" "sagemaker_full" {
+  role       = aws_iam_role.sagemaker_execution_role.id
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "logs_access" {
+  role       = aws_iam_role.sagemaker_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
 }
 
 #

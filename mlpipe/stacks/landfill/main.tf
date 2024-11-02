@@ -1,41 +1,33 @@
 locals {
-  resprefix = "${var.project_name}-${var.env}"
+  resprefix = "${var.project_name}-${var.env}-landfill-"
 }
 
-#
-# --- SAGEMAKER TRAINING JOB ---
-#
-# resource "aws_sagemaker_training_job" "yolo_training_job" {
-#   name     = "yolo-training-job"
-#   role_arn = aws_iam_role.sagemaker_execution_role.arn
-#   algorithm_specification {
-#     training_image      = "763104351884.dkr.ecr.us-west-2.amazonaws.com/yolov5-training:latest" # Update with the actual YOLO image
-#     training_input_mode = "File"
-#   }
+resource "aws_sagemaker_model" "yologeneric" {
+  name               = "${local.resprefix}-yolo-generic"
+  execution_role_arn = var.sagemaker_execution_role.arn
 
-#   resource_config {
-#     instance_type     = "ml.p3.2xlarge" # Change based on your training needs
-#     instance_count    = 1
-#     volume_size_in_gb = 50
-#   }
+  primary_container {
+    image          = "763104351884.dkr.ecr.eu-west-1.amazonaws.com/pytorch-inference:2.4-cpu-py311"
+    mode           = "SingleModel"
+    model_data_url = "s3://${var.aws_s3_bucket_aimodels.bucket}/models/genericyolo/model-v20241102.tar.gz"
+  }
+}
 
-#   stopping_condition {
-#     max_runtime_in_seconds = 86400
-#   }
+# SageMaker Serverless Inference Endpoint Configuration
+resource "aws_sagemaker_endpoint_configuration" "yologeneric" {
+  name = "${local.resprefix}-yolo11-generic-config"
+  production_variants {
+    variant_name = "AllTraffic"
+    model_name   = aws_sagemaker_model.yologeneric.name
+    serverless_config {
+      memory_size_in_mb = 2048
+      max_concurrency   = 5
+    }
+  }
+}
 
-#   input_data_config {
-#     channel_name = "training"
-#     data_source {
-#       s3_data_source {
-#         s3_data_type              = "S3Prefix"
-#         s3_uri                    = "s3://${aws_s3_bucket.yolo_data_bucket.bucket}/training-data/"
-#         s3_data_distribution_type = "FullyReplicated"
-#       }
-#     }
-#   }
-
-#   output_data_config {
-#     s3_output_path = "s3://${aws_s3_bucket.yolo_data_bucket.bucket}/model-artifacts"
-#   }
-
-# }
+# SageMaker Serverless Endpoint
+resource "aws_sagemaker_endpoint" "yologeneric" {
+  name                 = "${local.resprefix}-yolo11-generic"
+  endpoint_config_name = aws_sagemaker_endpoint_configuration.yologeneric.name
+}
