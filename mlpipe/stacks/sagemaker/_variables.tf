@@ -14,5 +14,10 @@ variable "project_name" {
 }
 
 variable "account_id" {
-  type        = string
+  type = string
+}
+
+variable "include_notebook" {
+  type    = bool
+  default = false
 }

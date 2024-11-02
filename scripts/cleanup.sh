@@ -127,6 +127,7 @@ delete_sagemaker_notebooks() {
 
             if [ -n "$TAG_MATCH" ]; then
                 echo -e "${YELLOW}Deleting SageMaker notebook: $NOTEBOOK_INSTANCE_NAME${RESET}"
+                aws sagemaker stop-notebook-instance --notebook-instance-name $NOTEBOOK_INSTANCE_NAME > /dev/null
                 aws sagemaker delete-notebook-instance --notebook-instance-name $NOTEBOOK_INSTANCE_NAME > /dev/null
 
                 if [ $? -eq 0 ]; then

@@ -45,11 +45,12 @@ resource "aws_iam_role_policy" "sagemaker_s3_access" {
 # --- NOTEBOOK FOR EXPERIMENTATION ---
 #
 resource "aws_sagemaker_notebook_instance" "experiments" {
+  count    = var.include_notebook ? 1 : 0
   name     = "${local.resprefix}-experiments-nb"
   role_arn = aws_iam_role.sagemaker_execution_role.arn
 
   # Compute Settings
-  instance_type = "ml.t2.medium"
+  instance_type = "ml.g4dn.xlarge" # https://aws.amazon.com/it/sagemaker/pricing/
   # Storage Settings
   volume_size = 10
   # Network Settings

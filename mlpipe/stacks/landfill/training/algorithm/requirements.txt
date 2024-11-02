@@ -1,9 +1,0 @@
-transformers==4.46.1
-pytorch-lightning
-wandb
-roboflow
-torch
-torchvision
-pycocotools
-numpy
-scipy

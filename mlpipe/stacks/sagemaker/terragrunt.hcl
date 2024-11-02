@@ -13,4 +13,5 @@ inputs = {
   region                      = local.config.region.primary
   project_name                = local.config.project_name
   env                         = local.stage.env
+  include_notebook            = false
 }
