@@ -54,3 +54,5 @@ Thumbs.db
 
 .local_dataset
 .env
+.build
+.out
