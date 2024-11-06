@@ -118,5 +118,5 @@ resource "aws_lambda_permission" "allow_eventbridge" {
   principal     = "events.amazonaws.com"
 
   # Replace with your custom event bus ARN
-  source_arn    = "arn:aws:events:${var.region}:${var.account_id}:event-bus/*"
+  source_arn = var.eventbridge_bus_arn
 }

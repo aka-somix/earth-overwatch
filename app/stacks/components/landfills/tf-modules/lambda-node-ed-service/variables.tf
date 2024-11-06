@@ -67,12 +67,7 @@ variable "attached_policies" {
   default     = []
 }
 
-variable "account_id" {
-  description = "AWS Account ID"
-  type        = string
-}
-
-variable "region" {
-  description = "AWS Region"
+variable "eventbridge_bus_arn" {
+  description = "Eventbridge Bus to be allowed"
   type        = string
 }

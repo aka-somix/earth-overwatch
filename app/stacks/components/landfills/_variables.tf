@@ -41,27 +41,33 @@ variable "lambda_security_group_ids" {
 
 variable "eventrule_new_image_data_from_synth" {
   type = object({
-    id = string
+    id   = string
     name = string
   })
 }
 
 variable "dataplatform_eventbus" {
   type = object({
-    id = string
+    id   = string
     name = string
   })
 }
 
 variable "backend_eventbus" {
   type = object({
-    id = string
+    id   = string
     name = string
-    arn = string
+    arn  = string
   })
 }
 
 variable "geo_apigw_endpoint" {
-  type = string
+  type        = string
   description = "Https Endpoint for calling the Geo APIGW"
+}
+
+variable "aws_policy_landingzonebucket_readonly" {
+  type = object({
+    arn = string
+  })
 }

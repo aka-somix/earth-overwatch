@@ -55,6 +55,16 @@ dependency "geo" {
   }
 }
 
+dependency "dataplatform" {
+  config_path = find_in_parent_folders("dataplatform")
+
+  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan"]
+  mock_outputs_merge_with_state = contains(["init", "validate", "plan"], get_terraform_command()) ? true : false
+  mock_outputs = {
+    aws_policy_landingzonebucket_readonly = { arn = "mock"}
+  }
+}
+
 inputs = {
   # module configuration variables
   account_id              = get_aws_account_id()
@@ -85,4 +95,7 @@ inputs = {
 
   # GEO MODULE DEPENDENICES:
   geo_apigw_endpoint = dependency.geo.outputs.geo_apigw_endpoint
+  
+  # DATAPLATFORM MODULE DEPENDENICES:
+  aws_policy_landingzonebucket_readonly = dependency.dataplatform.outputs.aws_policy_landingzonebucket_readonly
 }
