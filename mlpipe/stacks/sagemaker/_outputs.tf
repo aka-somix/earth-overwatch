@@ -8,6 +8,6 @@ output "aws_s3_bucket_aimodels" {
   value = data.aws_s3_bucket.aimodelsbucket
 }
 
-output "datasets_efs_mount_target" {
-  value = aws_efs_mount_target.dataset_storage
+output "datasets_efs_access_point" {
+  value = aws_efs_access_point.dataset_storage
 }
