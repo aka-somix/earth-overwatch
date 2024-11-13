@@ -16,9 +16,3 @@ The other parts of the event can be used freely but are not standardized. Theref
     } 
 }
 ```
-## Data Platform Broker
-TBD
-
-
-## Backend For Frontend Broker
-TBD

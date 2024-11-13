@@ -13,5 +13,5 @@ output "geodb_readonlys_endpoint" {
 }
 
 output "geo_apigw_endpoint" {
-  value = aws_api_gateway_deployment.this.invoke_url
+  value = aws_api_gateway_stage.env.invoke_url
 }

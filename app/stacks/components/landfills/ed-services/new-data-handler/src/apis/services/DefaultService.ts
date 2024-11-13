@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { Monitor } from '../models/Monitor';
+import type { MonitorGeoSearch } from '../models/MonitorGeoSearch';
 import type { NewMonitorRequest } from '../models/NewMonitorRequest';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -11,16 +12,21 @@ export class DefaultService {
     /**
      * Create a new monitor
      * Creates a new monitor for a specific municipality with a specific type of monitoring.
+     * @param type type of monitoring (e.g., LANDFILL)
      * @param requestBody The information needed to create a new monitor
      * @returns Monitor Monitor created successfully
      * @throws ApiError
      */
     public postMonitoring(
+        type: 'LANDFILL',
         requestBody: NewMonitorRequest,
     ): CancelablePromise<Monitor> {
         return this.httpRequest.request({
             method: 'POST',
-            url: '/monitoring',
+            url: '/monitoring/{type}',
+            path: {
+                'type': type,
+            },
             body: requestBody,
             mediaType: 'application/json',
             errors: {
@@ -32,27 +38,23 @@ export class DefaultService {
     /**
      * Retrieve all monitors
      * Retrieve a list of all monitors, with optional filtering. Each monitor includes details about the monitored municipality, type of monitoring, and the date when the monitoring was requested.
+     * @param type type of monitoring (e.g., LANDFILL)
      * @param idMunicipality Filter monitors by municipality ID
-     * @param type Filter monitors by the type of monitoring (e.g., WILDFIRE)
-     * @param longitude Filter monitor by municipality not known, looking up a spatial point to get the municipality, also requires longitude to work
-     * @param latitude Filter monitor by municipality not known, looking up a spatial point to get the municipality, also requires latitude to work
      * @returns Monitor A list of monitors
      * @throws ApiError
      */
     public getMonitoring(
+        type: 'LANDFILL',
         idMunicipality?: number,
-        type?: 'WILDFIRE',
-        longitude?: number,
-        latitude?: number,
     ): CancelablePromise<Array<Monitor>> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/monitoring',
+            url: '/monitoring/{type}',
+            path: {
+                'type': type,
+            },
             query: {
                 'idMunicipality': idMunicipality,
-                'type': type,
-                'longitude': longitude,
-                'latitude': latitude,
             },
             errors: {
                 500: `Internal server error`,
@@ -77,6 +79,31 @@ export class DefaultService {
             },
             errors: {
                 404: `Monitor not found`,
+                500: `Internal server error`,
+            },
+        });
+    }
+    /**
+     * Search a Monitor based on a geographic search on latitude and longitude
+     * Search a Monitor based on a geographic search on latitude and longitude.
+     * @param type type of monitoring (e.g., LANDFILL)
+     * @param requestBody The information needed to create a new monitor
+     * @returns Monitor A list of monitors
+     * @throws ApiError
+     */
+    public postMonitoringGeosearch(
+        type: 'LANDFILL',
+        requestBody: MonitorGeoSearch,
+    ): CancelablePromise<Array<Monitor>> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/monitoring/{type}/geosearch',
+            path: {
+                'type': type,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
                 500: `Internal server error`,
             },
         });

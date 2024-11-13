@@ -12,7 +12,7 @@ export type Monitor = {
      */
     idMunicipality?: number;
     /**
-     * The type of monitoring (e.g., WILDFIRE)
+     * The type of monitoring (e.g., LANDFILL)
      */
     type?: Monitor.type;
     /**
@@ -22,10 +22,10 @@ export type Monitor = {
 };
 export namespace Monitor {
     /**
-     * The type of monitoring (e.g., WILDFIRE)
+     * The type of monitoring (e.g., LANDFILL)
      */
     export enum type {
-        WILDFIRE = 'WILDFIRE',
+        LANDFILL = 'LANDFILL',
     }
 }
 

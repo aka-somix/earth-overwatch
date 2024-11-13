@@ -15,8 +15,8 @@ export async function sendEvent (payload: EventPayload) {
     const eventParams = {
         Entries: [
             {
-                Source: "component/wildfire/newdata",
-                DetailType: "wildfire/segmentation",
+                Source: "component/landfill/newdata",
+                DetailType: "detect/landfills",
                 Detail: JSON.stringify({
                     latitude: payload.latitude,
                     longitude: payload.longitude,

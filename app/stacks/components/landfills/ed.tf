@@ -52,11 +52,6 @@ module "lambda_service_new_data_handler" {
   # Global settings
   eventbridge_bus_arn = "arn:aws:events:${var.region}:${var.account_id}:event-bus/*"
 
-
-  attached_policies = [
-    aws_iam_policy.send_events_backend.arn
-  ]
-
   # VPC Config
   vpc = {
     enabled            = true
@@ -68,8 +63,13 @@ module "lambda_service_new_data_handler" {
   env_vars = {
     "EVENT_BUS_NAME"           = var.backend_eventbus.name
     "API_KEY"                  = data.aws_api_gateway_api_key.personal.value
-    "MONITORING_API_BASE_PATH" = var.geo_apigw_endpoint
+    "MONITORING_API_BASE_PATH" = "${var.geo_apigw_endpoint}"
   }
+}
+
+resource "aws_iam_role_policy_attachment" "send_events_to_backend_bus" {
+  role       = module.lambda_service_new_data_handler.iam_role.id
+  policy_arn = aws_iam_policy.send_events_backend.arn
 }
 
 resource "aws_cloudwatch_event_target" "send_from_synth_data" {
@@ -105,7 +105,7 @@ module "lambda_detect_landfill" {
     ENDPOINT_NAME = "scrnts-dev-landfill-yolo11-generic"
   }
 }
-
+# IAM POLICIES
 resource "aws_iam_role_policy_attachment" "detect_landfill_s3_read" {
   role       = module.lambda_detect_landfill.iam_role.id
   policy_arn = var.aws_policy_landingzonebucket_readonly.arn
@@ -113,6 +113,14 @@ resource "aws_iam_role_policy_attachment" "detect_landfill_s3_read" {
 resource "aws_iam_role_policy_attachment" "detect_landfill_sagemaker_invoke" {
   role       = module.lambda_detect_landfill.iam_role.id
   policy_arn = aws_iam_policy.sagemaker_invoke.arn
+}
+
+# EVENT TARGET
+resource "aws_cloudwatch_event_target" "new_data_to_detect" {
+  target_id      = "to-detect-landfill"
+  arn            = module.lambda_detect_landfill.arn
+  rule           = var.eventrule_be_detect_landfills.name
+  event_bus_name = var.backend_eventbus.name
 }
 
 # [END] DETECT LANDFILLS

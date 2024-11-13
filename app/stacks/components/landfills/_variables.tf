@@ -46,6 +46,13 @@ variable "eventrule_new_image_data_from_synth" {
   })
 }
 
+variable "eventrule_be_detect_landfills" {
+  type = object({
+    id   = string
+    name = string
+  })
+}
+
 variable "dataplatform_eventbus" {
   type = object({
     id   = string

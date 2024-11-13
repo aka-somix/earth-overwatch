@@ -3,27 +3,34 @@ info:
   title: Monitor Service API
   description: API for managing monitors for municipalities.
   version: 2.0.0
-  
 
 paths:
-  /monitoring:
+  /monitoring/{type}:
     post:
       summary: Create a new monitor
       description: Creates a new monitor for a specific municipality with a specific type of monitoring.
+      parameters:
+        - name: type
+          in: path
+          description: type of monitoring (e.g., LANDFILL)
+          required: true
+          schema:
+            type: string
+            enum: [LANDFILL]
       requestBody:
         description: The information needed to create a new monitor
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewMonitorRequest'
+              $ref: "#/components/schemas/NewMonitorRequest"
       responses:
         201:
           description: Monitor created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Monitor'
+                $ref: "#/components/schemas/Monitor"
         400:
           description: Bad request, missing or invalid parameters
         500:
@@ -33,29 +40,19 @@ paths:
       summary: Retrieve all monitors
       description: Retrieve a list of all monitors, with optional filtering. Each monitor includes details about the monitored municipality, type of monitoring, and the date when the monitoring was requested.
       parameters:
+        - name: type
+          in: path
+          description: type of monitoring (e.g., LANDFILL)
+          required: true
+          schema:
+            type: string
+            enum: [LANDFILL]
         - name: idMunicipality
           in: query
           description: Filter monitors by municipality ID
           required: false
           schema:
             type: integer
-        - name: type
-          in: query
-          description: Filter monitors by the type of monitoring (e.g., WILDFIRE)
-          required: false
-          schema:
-            type: string
-            enum: [WILDFIRE]
-        - name: longitude
-          in: query
-          description: Filter monitor by municipality not known, looking up a spatial point to get the municipality, also requires longitude to work
-          schema:
-            type: number
-        - name: latitude
-          in: query
-          description: Filter monitor by municipality not known, looking up a spatial point to get the municipality, also requires latitude to work
-          schema:
-            type: number
       responses:
         200:
           description: A list of monitors
@@ -64,7 +61,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Monitor'
+                  $ref: "#/components/schemas/Monitor"
         500:
           description: Internal server error
 
@@ -86,23 +83,59 @@ paths:
           description: Monitor not found
         500:
           description: Internal server error
-
+  /monitoring/{type}/geosearch:
+    post:
+      summary: Search a Monitor based on a geographic search on latitude and longitude
+      description: Search a Monitor based on a geographic search on latitude and longitude.
+      parameters:
+        - name: type
+          in: path
+          description: type of monitoring (e.g., LANDFILL)
+          required: true
+          schema:
+            type: string
+            enum: [LANDFILL]
+      requestBody:
+        description: The information needed to create a new monitor
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MonitorGeoSearch"
+      responses:
+        200:
+          description: A list of monitors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Monitor"
+        500:
+          description: Internal server error
 components:
   schemas:
     NewMonitorRequest:
       type: object
       required:
         - idMunicipality
-        - type
       properties:
         idMunicipality:
           type: integer
           description: The ID of the municipality to be monitored
-        type:
-          type: string
-          description: The type of monitoring
-          enum:
-            - WILDFIRE
+
+    MonitorGeoSearch:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: float
+          description: the latitude of the point to search
+        longitude:
+          type: float
+          description: the longitude of the point to search
 
     Monitor:
       type: object
@@ -115,9 +148,9 @@ components:
           description: The ID of the municipality being monitored
         type:
           type: string
-          description: The type of monitoring (e.g., WILDFIRE)
+          description: The type of monitoring (e.g., LANDFILL)
           enum:
-            - WILDFIRE
+            - LANDFILL
         dateRequested:
           type: string
           format: date-time

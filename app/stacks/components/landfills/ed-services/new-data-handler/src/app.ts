@@ -1,7 +1,7 @@
 import { EventBridgeEvent } from 'aws-lambda';
 import { Input } from "./@types";
 import { MonitoringAPI } from "./apis";
-import { MONITORING_API_BASE_PATH, API_KEY } from "./config";
+import { API_KEY, MONITORING_API_BASE_PATH } from "./config";
 import { sendEvent } from "./libs/events";
 import { logger } from "./libs/powertools";
 
@@ -45,17 +45,22 @@ export const handler = async (event: EventBridgeEvent<string, unknown>): Promise
 
   // Step 1 - Input Validation
   logger.info("Validating input");
-  const validInput = parseInput(event);
+  const validInput = parseInput(event.detail);
 
   // Step 2 - Check for data based on the coordinates
   logger.info(`Looking for a monitor for coordinates: [${validInput.latitude}, ${validInput.longitude}]`);
 
-  const response = await monitoringApi.default.getMonitoring(undefined, 'WILDFIRE', validInput.latitude, validInput.longitude);
+  const response = await monitoringApi.default.postMonitoringGeosearch('LANDFILL', {
+    latitude: validInput.latitude,
+    longitude: validInput.longitude
+  });
 
   // Check for results
   if (response.length > 0) {
     // Step 3 - Send the image for image segmentation over EventBridge
     logger.info(`Found ${response.length} monitors for requested coordinates.`);
+
+    logger.info(`Monitors found: [${response.map(i => JSON.stringify(i)).join(', ')}]`);
 
     await sendEvent({
       ...validInput,
