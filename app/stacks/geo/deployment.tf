@@ -12,7 +12,7 @@ resource "aws_api_gateway_deployment" "this" {
 
   depends_on = [
     module.lambda_service_monitor,
-    module.lambda_service_geo,
+    module.lambda_service_geo_data,
   ]
 }
 

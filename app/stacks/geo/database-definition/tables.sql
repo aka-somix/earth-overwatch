@@ -18,11 +18,11 @@ CREATE TABLE region (
     boundaries 			GEOMETRY(Geometry, 4326) not NULL -- Using SRID 4326 for GPS coordinates (WGS84) 
 );
 
-CREATE TABLE wildfire_monitoring (
+CREATE TABLE landfill_monitoring (
     id 					SERIAL PRIMARY KEY,
     id_municipality 	INT NOT NULL,
     requested_by        VARCHAR(100) NOT null,
-    reequest_date       TIMESTAMP,
+    requested_date      TIMESTAMP,
     created_at 			TIMESTAMP default CURRENT_TIMESTAMP,
     updated_at 			TIMESTAMP default CURRENT_TIMESTAMP
 );

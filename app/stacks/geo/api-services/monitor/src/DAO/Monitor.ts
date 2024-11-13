@@ -5,7 +5,8 @@ import { logger } from "../libs/powertools";
 /**
  * DATABASE ENTITIES
  */
-const wildfireMonitoringTable = 'wildfire_monitoring';
+const landfillMonitoringTable = 'landfill_monitoring';
+const municipalityTable = 'municipality';
 
 /**
  * DATA ACCESS OBJECT for Monitors
@@ -16,12 +17,12 @@ export class MonitorDAO {
      * Create a new monitor.
      * @param monitorDetails Object containing details of the new monitor (idMunicipality, type, requestedBy).
      */
-    public async createMonitor(monitorDetails: { idMunicipality: number; requestedBy: string }): Promise<Monitor> {
+    public async createMonitor(monitorDetails: { idMunicipality: number; requestedBy: string, type: string }): Promise<Monitor> {
         const { idMunicipality, requestedBy } = monitorDetails;
         const requestDate = new Date();
 
         const query = `
-            INSERT INTO ${wildfireMonitoringTable} (id_municipality, requested_by, requested_date)
+            INSERT INTO ${landfillMonitoringTable} (id_municipality, requested_by, requested_date)
             VALUES ($1, $2, $3)
             RETURNING id, id_municipality, requested_date;
         `;
@@ -33,7 +34,7 @@ export class MonitorDAO {
         return {
             id: newMonitor.id,
             idMunicipality: newMonitor.id_municipality,
-            type: Monitor.type.WILDFIRE,
+            type: Monitor.type.LANDFILL,
             dateRequested: newMonitor.requested_date,
         };
     }
@@ -46,7 +47,7 @@ export class MonitorDAO {
         // Build the dynamic WHERE clause
         let query = `
             SELECT id, id_municipality, requested_date
-            FROM ${wildfireMonitoringTable}
+            FROM ${landfillMonitoringTable}
         `;
 
         const queryParams: any[] = [];
@@ -62,7 +63,7 @@ export class MonitorDAO {
         return monitorsFound.map((monitor) => ({
             id: monitor.id,
             idMunicipality: monitor.id_municipality,
-            type: Monitor.type.WILDFIRE,
+            type: Monitor.type.LANDFILL,
             dateRequested: monitor.requested_date,
         }));
     }
@@ -74,7 +75,7 @@ export class MonitorDAO {
      */
     public async deleteMonitor(id: number): Promise<boolean> {
         const query = `
-            DELETE FROM ${wildfireMonitoringTable}
+            DELETE FROM ${landfillMonitoringTable}
             WHERE id = $1
             RETURNING id;
         `;
@@ -82,5 +83,26 @@ export class MonitorDAO {
         const result = await executeQuery(query, [id]);
 
         return result.length > 0;
+    }
+
+    public async searchByPoint(latitude: number, longitude: number): Promise<Array<Monitor>> {
+
+        let query = `
+            SELECT lm.*
+            FROM ${landfillMonitoringTable} lm
+                JOIN ${municipalityTable} m ON lm.id_municipality = m.id
+            WHERE ST_Contains(boundaries, ST_SetSRID(ST_MakePoint($1, $2), 4326));
+        `;
+
+        logger.info('CREATED QUERY', query);
+
+        const monitorsFound: Array<Record<string, any>> = await executeQuery(query, [longitude, latitude]);
+
+        return monitorsFound.map((monitor) => ({
+            id: monitor.id,
+            idMunicipality: monitor.id_municipality,
+            type: Monitor.type.LANDFILL,
+            dateRequested: monitor.requested_date,
+        }));
     }
 }

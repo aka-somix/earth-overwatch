@@ -4,4 +4,5 @@
 /* eslint-disable */
 
 export { Monitor } from './models/Monitor';
-export { NewMonitorRequest } from './models/NewMonitorRequest';
+export type { MonitorGeoSearch } from './models/MonitorGeoSearch';
+export type { NewMonitorRequest } from './models/NewMonitorRequest';

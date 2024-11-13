@@ -74,10 +74,10 @@ module "wildfire_apigw" { # TODO RENAME ME
 #
 
 # [START] GEO SERVICE
-module "lambda_service_geo" {
+module "lambda_service_geo_data" {
   source = "./tf-modules/lambda-node-api-service"
 
-  function_name                = "${local.resprefix}-geo-service"
+  function_name                = "${local.resprefix}-data-service"
   architectures                = ["arm64"]
   handler                      = "dist/index.handler"
   source_code_folder           = "./api-services/geo"
@@ -105,7 +105,7 @@ module "lambda_service_geo" {
 
 resource "aws_iam_role_policy_attachment" "geo_db_credentials_access" {
   policy_arn = aws_iam_policy.access_db_credentials.arn
-  role       = module.lambda_service_geo.iam_role.id
+  role       = module.lambda_service_geo_data.iam_role.id
 }
 # [END] GEO SERVICE
 
