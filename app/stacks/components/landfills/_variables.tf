@@ -41,6 +41,7 @@ variable "lambda_security_group_ids" {
 
 variable "eventrule_new_image_data_from_synth" {
   type = object({
+    arn  = string
     id   = string
     name = string
   })
@@ -48,6 +49,7 @@ variable "eventrule_new_image_data_from_synth" {
 
 variable "eventrule_be_detect_landfills" {
   type = object({
+    arn  = string
     id   = string
     name = string
   })

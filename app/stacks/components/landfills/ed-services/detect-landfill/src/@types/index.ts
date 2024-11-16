@@ -1,3 +1,9 @@
+export interface InputDetail {
+    latitude: number,
+    longitude: number,
+    imageS3URL: string
+}
+
 export interface DetectionResults {
     boxes: Array<Array<number>>;
 }

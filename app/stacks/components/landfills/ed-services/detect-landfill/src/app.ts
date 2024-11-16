@@ -1,11 +1,40 @@
-import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { InvokeEndpointCommand, SageMakerRuntimeClient } from "@aws-sdk/client-sagemaker-runtime";
 import { EventBridgeEvent } from "aws-lambda";
-import { DetectionResults, GeoJSONPolygon } from "./@types";
-import { ENDPOINT_NAME } from "./config";
+import { DetectionResults, GeoJSONPolygon, InputDetail } from "./@types";
+import { InferenceAPI } from "./libs/inference";
+import { logger } from "./libs/powertools";
+import { getStreamFromS3Url } from "./libs/s3";
 
-const s3Client = new S3Client({});
-const sagemakerClient = new SageMakerRuntimeClient({});
+function parseAndValidate (input: unknown): InputDetail {
+    // Validate the input is an object
+    if (typeof input !== "object" || input === null) {
+        throw new Error("Input must be a non-null object");
+    }
+
+    // Narrow the input to a specific type
+    const obj = input as Partial<InputDetail>;
+
+    // Validate latitude
+    if (typeof obj.latitude !== "number" || obj.latitude < -90 || obj.latitude > 90) {
+        throw new Error("Latitude must be a number between -90 and 90");
+    }
+
+    // Validate longitude
+    if (typeof obj.longitude !== "number" || obj.longitude < -180 || obj.longitude > 180) {
+        throw new Error("Longitude must be a number between -180 and 180");
+    }
+
+    // Validate imageS3URL
+    if (typeof obj.imageS3URL !== "string") {
+        throw new Error("imageS3URL must be a valid string");
+    }
+
+    // If all validations pass, return the object as InputDetail
+    return {
+        latitude: obj.latitude,
+        longitude: obj.longitude,
+        imageS3URL: obj.imageS3URL,
+    };
+}
 
 function convertBoxesToGeoJSON(detectionResults: DetectionResults): GeoJSONPolygon[] {
     const polygons: GeoJSONPolygon[] = [];
@@ -31,60 +60,25 @@ function convertBoxesToGeoJSON(detectionResults: DetectionResults): GeoJSONPolyg
     return polygons;
 }
 
-async function invokeSagemakerEndpoint(imageBase64: string, endpointName: string) {
 
-    // Prepare payload in JSON format
-    const payload = JSON.stringify({ image: imageBase64 });
-
-    // Set up the command to invoke the endpoint
-    const command = new InvokeEndpointCommand({
-        EndpointName: endpointName,
-        ContentType: "application/json",
-        Body: Buffer.from(payload),
-    });
-
-    try {
-        const response = await sagemakerClient.send(command);
-        const responseBody = await response.Body?.transformToString();
-        return JSON.parse(responseBody || "{}");
-    } catch (error) {
-        console.error("Error invoking SageMaker endpoint:", error);
-        throw error;
-    }
-}
-
-function parseS3Uri(s3Uri: string): { bucket: string; key: string } {
-    const s3UriPattern = /^s3:\/\/([^/]+)\/(.+)$/;
-    const match = s3Uri.match(s3UriPattern);
-
-    if (match) {
-        const bucket = match[1];
-        const key = match[2];
-        return { bucket, key };
-    }
-
-    throw new Error("Invalid S3 URI format");
-}
-
-export async function handler(event: EventBridgeEvent<string, { s3Url: string; }>) {
+export async function handler (event: EventBridgeEvent<string, unknown>) {
     console.log(`Parsing ${JSON.stringify(event)}`);
 
-    const { bucket, key } = parseS3Uri(event.detail.s3Url);
+    const { latitude, longitude, imageS3URL } = parseAndValidate(event.detail);
 
-    console.log(`BUCKET: ${bucket}| KEY: ${key}`);
+    logger.info(`Retrieving Stream from ${imageS3URL}`)
 
-    const imageStream = await s3Client.send(new GetObjectCommand({
-        Bucket: bucket,
-        Key: key,
-    }));
+    const imageStream = await getStreamFromS3Url(imageS3URL);
 
-    const imageBase64 = await imageStream.Body?.transformToString('base64');
+    const imageBase64 = await imageStream.transformToString('base64');
 
     if (imageBase64 === undefined) return;
 
-    console.log("Invoking Sagemaker for inference");
+    logger.info("Invoking Sagemaker API for inference on stream");
 
-    const detections = await invokeSagemakerEndpoint(imageBase64, ENDPOINT_NAME);
+    const detections = await InferenceAPI.inference(imageBase64)
+        ;
+    logger.info("Converting results into GeoJSON Boxes")
 
     const geojsons = convertBoxesToGeoJSON(detections);
 
