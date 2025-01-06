@@ -11,9 +11,3 @@ output "aws_policy_landingzonebucket_full" {
 output "aws_policy_aimodelsbucket_readonly" {
   value = aws_iam_policy.aimodelsbucket_readonly
 }
-output "aws_policy_aimodelsbucket_readonly" {
-  value = aws_iam_policy.aimodelsbucket_readonly
-}
-output "aws_policy_aimodelsbucket_readonly" {
-  value = aws_iam_policy.landingzonebucket_readonly
-}

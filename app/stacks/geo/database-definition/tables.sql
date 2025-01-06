@@ -1,3 +1,5 @@
+CREATE EXTENSION postgis;
+
 CREATE TABLE municipality (
     id 					SERIAL PRIMARY KEY,
     name 				VARCHAR(255) not NULL,
