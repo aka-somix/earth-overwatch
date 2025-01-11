@@ -16,6 +16,8 @@ repository_name: &repo_name scirone-eg-infra
 # This is used as prefix for every resource deployed
 project_name: &proj_name scrnts
 
+service_catalog_app_id: "scirone-tesi"
+
 region:
   primary: eu-west-1
   failover-1: eu-central-1

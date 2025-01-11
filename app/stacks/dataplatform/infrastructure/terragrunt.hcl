@@ -4,7 +4,7 @@ include {
 
 locals{
   config = yamldecode(file(find_in_parent_folders("config.yaml")))
-  stage   = yamldecode(file("../../config/${get_env("ENV", "dev")}.yaml"))
+  stage   = yamldecode(file(find_in_parent_folders("config/${get_env("ENV", "dev")}.yaml")))
 }
 
 inputs = {

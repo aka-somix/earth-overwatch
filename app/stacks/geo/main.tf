@@ -14,7 +14,7 @@ module "geodb" {
 
   cluster_name   = local.resprefix
   database_name  = "geographical"
-  engine_version = 15.4
+  engine_version = 16.1
 
   # Connectivity
   database_security_groups_ids = var.security_group_ids

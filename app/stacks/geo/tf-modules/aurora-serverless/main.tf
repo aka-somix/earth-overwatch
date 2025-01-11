@@ -25,6 +25,9 @@ resource "aws_rds_cluster" "this" {
     min_capacity = var.min_capacity
   }
 
+  allow_major_version_upgrade = true
+  apply_immediately           = true
+
   tags = var.tags
 }
 
@@ -34,7 +37,10 @@ resource "aws_rds_cluster_instance" "this_instance_readwrite" {
   cluster_identifier = aws_rds_cluster.this.id
   instance_class     = "db.serverless"
   engine             = "aurora-postgresql"
-  engine_version     = 15.4
+  engine_version     = var.engine_version
+
+  auto_minor_version_upgrade = true
+  apply_immediately          = true
 
   tags = var.tags
 }
@@ -45,8 +51,8 @@ resource "aws_db_subnet_group" "this_rds" {
 }
 
 resource "aws_rds_cluster_parameter_group" "this" {
-  name        = "${var.cluster_name}-parametergroup"
-  family      = "aurora-postgresql15"
+  name        = "${var.cluster_name}-paramgroup"
+  family      = "aurora-postgresql16"
   description = "RDS Cluster Parameter Group for ${var.cluster_name} Aurora database"
 
   parameter {

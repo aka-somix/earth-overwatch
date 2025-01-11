@@ -37,10 +37,22 @@ generate "provider" {
     type = map
   }
 
+  # Provider temporary just to create the Project in the Service Catalog
+  provider "aws" {
+    alias  = "application"
+    region = "${local.config.region.primary}"
+  }
+
+  # Service Catalog Project (MUST already exist in order to be used)
+  data "aws_servicecatalogappregistry_application" "main" {
+    provider    = aws.application
+    id          = "${local.config.service_catalog_app_id}"
+  }
+
   provider "aws" {
     region = "${local.config.region.primary}"
     default_tags {
-      tags = var.default_tags
+      tags = merge(var.default_tags, data.aws_servicecatalogappregistry_application.main.application_tag)
     }
   }
 
