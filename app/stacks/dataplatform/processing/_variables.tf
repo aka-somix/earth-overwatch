@@ -17,3 +17,38 @@ variable "account_id" {
   description = "project prefix name"
   type        = string
 }
+
+variable "ce_subnets_ids" {
+  type = list(string)
+}
+
+variable "ce_security_groups_ids" {
+  type = list(string)
+}
+
+variable "landing_zone_bucket" {
+  type = object({
+    name = string
+    arn  = string
+  })
+}
+
+variable "aws_policy_landingzonebucket_readonly" {
+  type = object({
+    id  = string
+    arn = string
+  })
+}
+
+variable "refined_zone_bucket" {
+  type = object({
+    name = string
+    arn  = string
+  })
+}
+variable "aws_policy_redefinedzone_writeread" {
+  type = object({
+    id  = string
+    arn = string
+  })
+}
