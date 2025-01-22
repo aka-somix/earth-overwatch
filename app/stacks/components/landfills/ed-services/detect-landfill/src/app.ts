@@ -1,4 +1,4 @@
-import { EventBridgeEvent } from "aws-lambda";
+import { Callback, Context, EventBridgeEvent } from "aws-lambda";
 import { DetectionResults, GeoJSONPolygon, InputDetail } from "./@types";
 import { InferenceAPI } from "./libs/inference";
 import { logger } from "./libs/powertools";
@@ -61,7 +61,7 @@ function convertBoxesToGeoJSON(detectionResults: DetectionResults): GeoJSONPolyg
 }
 
 
-export async function handler (event: EventBridgeEvent<string, unknown>) {
+export async function handler(event: EventBridgeEvent<string, unknown>, context: Context) {
     console.log(`Parsing ${JSON.stringify(event)}`);
 
     const { latitude, longitude, imageS3URL } = parseAndValidate(event.detail);
@@ -72,7 +72,12 @@ export async function handler (event: EventBridgeEvent<string, unknown>) {
 
     const imageBase64 = await imageStream.transformToString('base64');
 
-    if (imageBase64 === undefined) return;
+    if (imageBase64 === undefined) {
+        return {
+            statusCode: 400,
+            body: "Bad Input. Invalid image"
+        }
+    }
 
     logger.info("Invoking Sagemaker API for inference on stream");
 
@@ -83,4 +88,10 @@ export async function handler (event: EventBridgeEvent<string, unknown>) {
     const geojsons = convertBoxesToGeoJSON(detections);
 
     console.log(JSON.stringify(geojsons));
+
+    return {
+        statusCode: 200,
+        body: "Success.",
+        isBase64Encoded: false,
+    }
 }

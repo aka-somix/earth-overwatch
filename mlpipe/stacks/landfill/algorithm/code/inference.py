@@ -9,14 +9,14 @@ import torch, os, json, base64, cv2, time
 from ultralytics import YOLO
 
 def model_fn(model_dir):
-    print("Executing model_fn from inference.py ...")
+    print("Istantiating YOLO Model")
     env = os.environ
     model = YOLO(os.path.join(model_dir, "yolo11m.pt"))
     return model
 
 
 def input_fn(request_body, request_content_type):
-    print("Executing input_fn from inference.py ...")
+    print("Parsing input from request")
     if request_content_type:
         jpg_original = base64.b64decode(request_body)
         jpg_as_np = np.frombuffer(jpg_original, dtype=np.uint8)
@@ -27,11 +27,18 @@ def input_fn(request_body, request_content_type):
 
 # Process an incoming inference request
 def predict_fn(input_data, model):
-    print("Executing predict_fn from inference.py ...")
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model.to(device)
+    print("Executing inference on input data parsed")
+    if torch.cuda.is_available():
+        print("Using CUDA")
+        processor = "cuda"
+    else:
+        print("Using CPU")
+        processor = "cpu"
+    model.to(torch.device(processor))
+
     with torch.no_grad():
         result = model(input_data)
+
     return result
         
 def output_fn(prediction_output, content_type):
