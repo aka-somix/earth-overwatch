@@ -30,4 +30,7 @@ resource "aws_sagemaker_endpoint_configuration" "yologeneric" {
 resource "aws_sagemaker_endpoint" "yologeneric" {
   name                 = "${local.resprefix}-yolo11-generic"
   endpoint_config_name = aws_sagemaker_endpoint_configuration.yologeneric.name
+  lifecycle {
+    replace_triggered_by = [aws_sagemaker_model.yologeneric]
+  }
 }
