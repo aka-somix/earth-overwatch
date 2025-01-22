@@ -76,9 +76,9 @@ export async function handler (event: EventBridgeEvent<string, unknown>) {
 
     logger.info("Invoking Sagemaker API for inference on stream");
 
-    const detections = await InferenceAPI.inference(imageBase64)
-        ;
-    logger.info("Converting results into GeoJSON Boxes")
+    const detections = await InferenceAPI.inference(imageBase64);
+
+    logger.info("Converting results into GeoJSON Boxes");
 
     const geojsons = convertBoxesToGeoJSON(detections);
 

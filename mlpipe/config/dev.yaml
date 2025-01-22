@@ -1,1 +1,5 @@
 env: dev
+
+utils:
+  feature_flags:
+    notebook_eraser_flag: false
