@@ -90,9 +90,9 @@ module "lambda_detect_landfill" {
   function_name       = "${local.resprefix}-ed-detect-landfill"
   architectures       = ["arm64"]
   handler             = "dist/index.handler"
-  memory_size         = 128
-  timeout             = 10
-  logs_retention_days = 30
+  memory_size         = 256
+  timeout             = 60
+  logs_retention_days = 7
   # Source code
   source_code_folder     = "./ed-services/detect-landfill"
   lambda_packages_bucket = var.s3_bucket_lambda_packages
@@ -103,6 +103,7 @@ module "lambda_detect_landfill" {
   # ENV
   env_vars = {
     ENDPOINT_NAME = "scrnts-dev-landfill-yolo11-generic"
+    LOG_LEVEL = "DEBUG"
   }
 }
 # IAM POLICIES
@@ -124,4 +125,52 @@ resource "aws_cloudwatch_event_target" "new_data_to_detect" {
 }
 
 # [END] DETECT LANDFILLS
+
+# [START] DETECT LANDFILLS NEW
+resource "aws_ecr_repository" "detect_landfill" {
+  name = "${local.resprefix}-detect-landfill-service-repo"
+}
+
+module "lambda_detect_landfill_new" {
+  source = "./tf-modules/lambda-containerized-ed"
+
+  # Lambda Settings
+  function_name       = "${local.resprefix}-ed-detect-landfill-new"
+  memory_size         = 256
+  timeout             = 120
+  logs_retention_days = 7
+
+  # Source code
+  source_code_folder     = "./ed-services/detect-landfill-new"
+  ecr_repository_url = aws_ecr_repository.detect_landfill.repository_url
+  ecr_registry = "${var.account_id}.dkr.ecr.${var.region}.amazonaws.com"
+  region = var.region
+  
+  # Eventbridge bus arn allowed 
+  eventbridge_bus_arn = var.eventrule_be_detect_landfills.arn
+
+  # ENV
+  env_vars = {
+    ENDPOINT_NAME = "scrnts-dev-landfill-yolo11-generic"
+  }
+}
+# IAM POLICIES
+resource "aws_iam_role_policy_attachment" "detect_landfillnew_s3_read" {
+  role       = module.lambda_detect_landfill_new.iam_role.id
+  policy_arn = var.aws_policy_landingzonebucket_readonly.arn
+}
+resource "aws_iam_role_policy_attachment" "detect_landfillnew_sagemaker_invoke" {
+  role       = module.lambda_detect_landfill_new.iam_role.id
+  policy_arn = aws_iam_policy.sagemaker_invoke.arn
+}
+
+# EVENT TARGET
+resource "aws_cloudwatch_event_target" "new_data_to_detect_new" {
+  target_id      = "to-detect-landfill-new"
+  arn            = module.lambda_detect_landfill_new.arn
+  rule           = var.eventrule_be_detect_landfills.name
+  event_bus_name = var.backend_eventbus.name
+}
+
+# [END] DETECT LANDFILLS NEW
 

@@ -20,7 +20,7 @@ export class InferenceAPI {
         // Set up the command to invoke the endpoint
         const command = new InvokeEndpointCommand({
             EndpointName: ENDPOINT_NAME,
-            ContentType: "application/json",
+            ContentType: "image/png",
             Body: Buffer.from(payload),
         });
 

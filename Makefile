@@ -55,3 +55,5 @@ mlpipe:
 # Prevent make from treating commands or subtargets as standalone targets
 %:
 	@true
+%:
+	@true
