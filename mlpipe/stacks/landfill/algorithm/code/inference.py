@@ -16,14 +16,19 @@ def model_fn(model_dir):
 
 
 def input_fn(request_body, request_content_type):
-    print("Parsing input from request")
-    if request_content_type:
+    print(f"Parsing input from request with content-type: {request_content_type}")
+    if "image" in request_content_type:
+        print("Pre-processing decoding a base64 image into a cv2 object")
         jpg_original = base64.b64decode(request_body)
         jpg_as_np = np.frombuffer(jpg_original, dtype=np.uint8)
-        img = cv2.imdecode(jpg_as_np, flags=-1)
+        parsed_input = cv2.imdecode(jpg_as_np, flags=-1)
+    
+    elif request_content_type == "application/json":
+        print("Processing a cv2 object directly")
+        parsed_input = request_body
     else:
         raise Exception("Unsupported content type: " + request_content_type)
-    return img
+    return parsed_input
 
 # Process an incoming inference request
 def predict_fn(input_data, model):
