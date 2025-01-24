@@ -1,0 +1,73 @@
+{
+    "Comment": "State machine to launch a SageMaker training job",
+    "StartAt": "StartTrainingJob",
+    "States": {
+        "StartTrainingJob": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::sagemaker:createTrainingJob.sync",
+            "Parameters": {
+                "TrainingJobName.$": "$.TrainingJobName",
+                "AlgorithmSpecification": {
+                    "TrainingImage": "your-docker-image-uri",
+                    "TrainingInputMode": "File"
+                },
+                "RoleArn": "arn:aws:iam::<your-account-id>:role/<your-sagemaker-role>",
+                "InputDataConfig": [
+                    {
+                        "ChannelName": "training",
+                        "DataSource": {
+                            "FileSystemDataSource": {
+                                "FileSystemId": "your-efs-id",
+                                "FileSystemAccessMode": "ro",
+                                "DirectoryPath": "/efs/dataset"
+                            }
+                        },
+                        "ContentType": "application/x-image",
+                        "InputMode": "File"
+                    }
+                ],
+                "OutputDataConfig": {
+                    "S3OutputPath": "s3://your-s3-bucket/yolo-checkpoints/"
+                },
+                "ResourceConfig": {
+                    "InstanceType": "ml.p3.2xlarge",
+                    "InstanceCount": 1,
+                    "VolumeSizeInGB": 50
+                },
+                "StoppingCondition": {
+                    "MaxRuntimeInSeconds": 86400
+                }
+            },
+            "Next": "CheckStatus"
+        },
+        "CheckStatus": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Variable": "$.TrainingJobStatus",
+                    "StringEquals": "Completed",
+                    "Next": "Success"
+                },
+                {
+                    "Variable": "$.TrainingJobStatus",
+                    "StringEquals": "Failed",
+                    "Next": "Fail"
+                }
+            ],
+            "Default": "WaitForCompletion"
+        },
+        "WaitForCompletion": {
+            "Type": "Wait",
+            "Seconds": 300,
+            "Next": "CheckStatus"
+        },
+        "Success": {
+            "Type": "Succeed"
+        },
+        "Fail": {
+            "Type": "Fail",
+            "Error": "TrainingJobFailed",
+            "Cause": "The training job failed."
+        }
+    }
+}

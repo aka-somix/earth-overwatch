@@ -35,5 +35,4 @@ inputs = {
 
   sagemaker_execution_role = dependency.sagemaker.outputs.sagemaker_execution_role
   aws_s3_bucket_aimodels = dependency.sagemaker.outputs.aws_s3_bucket_aimodels
-
 }

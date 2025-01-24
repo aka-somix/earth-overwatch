@@ -1,5 +1,8 @@
 env: dev
 
+storage:
+  datasets_efs_tagname: "utils-dev-dacoms-persistence-dataset-filesystem"
+
 utils:
   feature_flags:
     notebook_eraser_flag: false
