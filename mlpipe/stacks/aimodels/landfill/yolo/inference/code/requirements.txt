@@ -2,6 +2,6 @@ nvgpu
 opencv-python
 torchvision
 seaborn
-ultralytics
+ultralytics~= 8.3.68
 pynvml
 omegaconf==2.3.0

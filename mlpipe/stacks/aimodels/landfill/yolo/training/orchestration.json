@@ -11,15 +11,15 @@
                     "TrainingImage": "your-docker-image-uri",
                     "TrainingInputMode": "File"
                 },
-                "RoleArn": "arn:aws:iam::<your-account-id>:role/<your-sagemaker-role>",
+                "RoleArn": "${sagemaker-training-role-arn}",
                 "InputDataConfig": [
                     {
                         "ChannelName": "training",
                         "DataSource": {
                             "FileSystemDataSource": {
-                                "FileSystemId": "your-efs-id",
+                                "FileSystemId": "${efs-filesystem-id}",
                                 "FileSystemAccessMode": "ro",
-                                "DirectoryPath": "/efs/dataset"
+                                "DirectoryPath": "${efs-mounth-path}"
                             }
                         },
                         "ContentType": "application/x-image",
@@ -27,12 +27,12 @@
                     }
                 ],
                 "OutputDataConfig": {
-                    "S3OutputPath": "s3://your-s3-bucket/yolo-checkpoints/"
+                    "S3OutputPath": "${s3-output-folder-uri}"
                 },
                 "ResourceConfig": {
-                    "InstanceType": "ml.p3.2xlarge",
+                    "InstanceType": "${training-instance-type}",
                     "InstanceCount": 1,
-                    "VolumeSizeInGB": 50
+                    "VolumeSizeInGB": 100
                 },
                 "StoppingCondition": {
                     "MaxRuntimeInSeconds": 86400
