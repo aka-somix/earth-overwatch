@@ -28,6 +28,9 @@ help:
 clean:
 	./scripts/cleanup.sh
 
+# Translate commands for app and mlpipe
+APP_MLPIPE_COMMAND := $(shell echo $(COMMAND) | sed -e 's/up/apply/' -e 's/down/destroy/')
+
 # App target
 app:
 	@if [ "$(COMMAND)" = "" ]; then \
@@ -36,11 +39,11 @@ app:
 	elif [ "$(COMMAND)" = "build" ]; then \
 		echo "Command 'build' does nothing for app."; \
 	elif [ "$(SUBTARGET)" = "" ]; then \
-		echo "Running: terragrunt run-all $(COMMAND) in app/stacks"; \
-		(cd app/stacks && terragrunt run-all $(COMMAND)); \
+		echo "Running: terragrunt run-all $(APP_MLPIPE_COMMAND) in app/stacks"; \
+		(cd app/stacks && terragrunt run-all $(APP_MLPIPE_COMMAND)); \
 	else \
-		echo "Running: terragrunt run-all $(COMMAND) in app/stacks/$(SUBTARGET)"; \
-		(cd app/stacks/$(SUBTARGET) && terragrunt run-all $(COMMAND)); \
+		echo "Running: terragrunt run-all $(APP_MLPIPE_COMMAND) in app/stacks/$(SUBTARGET)"; \
+		(cd app/stacks/$(SUBTARGET) && terragrunt run-all $(APP_MLPIPE_COMMAND)); \
 	fi
 
 # MLPIPE target
@@ -51,11 +54,11 @@ mlpipe:
 	elif [ "$(COMMAND)" = "build" ]; then \
 		echo "Command 'build' does nothing for mlpipe."; \
 	elif [ "$(SUBTARGET)" = "" ]; then \
-		echo "Running: terragrunt run-all $(COMMAND) in mlpipe/stacks"; \
-		(cd mlpipe/stacks && terragrunt run-all $(COMMAND)); \
+		echo "Running: terragrunt run-all $(APP_MLPIPE_COMMAND) in mlpipe/stacks"; \
+		(cd mlpipe/stacks && terragrunt run-all $(APP_MLPIPE_COMMAND)); \
 	else \
-		echo "Running: terragrunt run-all $(COMMAND) in mlpipe/stacks/$(SUBTARGET)"; \
-		(cd mlpipe/stacks/$(SUBTARGET) && terragrunt run-all $(COMMAND)); \
+		echo "Running: terragrunt run-all $(APP_MLPIPE_COMMAND) in mlpipe/stacks/$(SUBTARGET)"; \
+		(cd mlpipe/stacks/$(SUBTARGET) && terragrunt run-all $(APP_MLPIPE_COMMAND)); \
 	fi
 
 # Web target
