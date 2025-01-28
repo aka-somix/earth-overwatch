@@ -8,29 +8,35 @@
             "Parameters": {
                 "TrainingJobName.$": "$.TrainingJobName",
                 "AlgorithmSpecification": {
-                    "TrainingImage": "your-docker-image-uri",
+                    "TrainingImage": "${training_image}",
                     "TrainingInputMode": "File"
                 },
-                "RoleArn": "${sagemaker-training-role-arn}",
+                "RoleArn": "${sagemaker_role_arn}",
+                "VpcConfig": {
+                    "SecurityGroupIds": [
+                        "${security_group_id}"
+                    ],
+                    "Subnets": [
+                        "${subnet}"
+                    ]
+                },
                 "InputDataConfig": [
                     {
                         "ChannelName": "training",
                         "DataSource": {
                             "FileSystemDataSource": {
-                                "FileSystemId": "${efs-filesystem-id}",
+                                "FileSystemId": "${efs_filesystem_id}",
                                 "FileSystemAccessMode": "ro",
-                                "DirectoryPath": "${efs-mounth-path}"
+                                "DirectoryPath": "${dataset_efs_path}"
                             }
-                        },
-                        "ContentType": "application/x-image",
-                        "InputMode": "File"
+                        }
                     }
                 ],
                 "OutputDataConfig": {
-                    "S3OutputPath": "${s3-output-folder-uri}"
+                    "S3OutputPath": "${s3_output_folder_uri}"
                 },
                 "ResourceConfig": {
-                    "InstanceType": "${training-instance-type}",
+                    "InstanceType": "${training_instance_type}",
                     "InstanceCount": 1,
                     "VolumeSizeInGB": 100
                 },

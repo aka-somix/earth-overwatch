@@ -20,7 +20,6 @@ while getopts "r:e:n:t:d:v:y:" opt; do
         e) ECR_REGISTRY="$OPTARG" ;;
         n) REPOSITORY_NAME="$OPTARG" ;;
         t) IMAGE_TAG="$OPTARG" ;;
-        d) DATASET_PATH="$OPTARG" ;;
         v) VERSION="$OPTARG" ;;
         y) YOLO_BASE_MODEL_URL="$OPTARG" ;;
         *) usage ;;
@@ -42,8 +41,7 @@ fi
 
 # Build the Docker image with build-time arguments
 echo "Building the Docker image..."
-docker build --build-arg DATASET_PATH=$DATASET_PATH \
-             --build-arg VERSION=$VERSION \
+docker build --build-arg VERSION=$VERSION \
              --build-arg YOLO_BASE_MODEL_URL=$YOLO_BASE_MODEL_URL \
              -t $REPOSITORY_NAME . --platform=linux/x86_64
 if [ $? -ne 0 ]; then

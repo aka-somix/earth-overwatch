@@ -5,13 +5,13 @@ import shutil
 from ultralytics import YOLO
 
 # ---- PARAMETERS ----
-DATASET_PATH = environ.get("DATASET_PATH", "/datasets/example")
 MODEL_CHECKPOINT = environ.get("MODEL_CHECKPOINT", "yolo11s.pt")
 VERSION = environ.get("VERSION", "0.0.0")
 SAGEMAKER_ARTIFACT_DIR = "/opt/ml/model"
 SAGEMAKER_WORK_DIR = "/opt/ml/code"
 SAGEMAKER_FAILURE_FILE = "/opt/ml/output/failure"
 SAGEMAKER_OUTPUT_FILE = "/opt/ml/output/data"
+SAGEMAKER_TRAINING_CH_PATH = "/opt/ml/input/training-channel"
 
 # Hyperparameters
 epochs = 5
@@ -37,9 +37,9 @@ try:
     )
     model = YOLO(path.join(SAGEMAKER_WORK_DIR, MODEL_CHECKPOINT))
 
-    log.info(f"Training Model from dataset at: {DATASET_PATH}")
+    log.info(f"Training Model from dataset at: {SAGEMAKER_TRAINING_CH_PATH}")
     results = model.train(
-        data=path.join(DATASET_PATH, "dataset.yaml"),
+        data=path.join(SAGEMAKER_TRAINING_CH_PATH, "data.yaml"),
         epochs=epochs,
         imgsz=img_size,
         project=SAGEMAKER_WORK_DIR,

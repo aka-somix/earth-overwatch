@@ -1,5 +1,11 @@
 env: dev
 
+landfill:
+  dataset_folder_name: landfill
+
+network:
+  vpc_prefix_tag: "rfa-labs"
+
 storage:
   datasets_efs_tagname: "utils-dev-dacoms-persistence-dataset-filesystem"
 

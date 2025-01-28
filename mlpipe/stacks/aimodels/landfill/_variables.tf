@@ -31,6 +31,31 @@ variable "aws_s3_bucket_aimodels" {
   })
 }
 
+variable "vpc" {
+  type = object({
+    id = string 
+  })
+}
+
+variable "subnets" {
+  type = list(string)
+}
+
+variable "datasets_efs" {
+  type = object({
+    arn = string
+    file_system_id = string 
+  })
+}
+
+variable "datasets_mount_path" {
+  type = string
+}
+
+variable "landfill_dataset_folder" {
+  type = string
+}
+
 variable "endpoint_max_concurrency" {
   type = number
   default = 5

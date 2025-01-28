@@ -13,19 +13,6 @@ variable "project_name" {
   type        = string
 }
 
-variable "account_id" {
+variable "vpc_prefix_tag" {
   type = string
-}
-
-variable "include_notebook" {
-  type    = bool
-  default = false
-}
-
-variable "subnets" {
-  type    = list(string)
-}
-
-variable "security_group_ids" {
-  type    = list(string)
 }

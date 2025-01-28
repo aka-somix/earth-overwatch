@@ -1,6 +1,9 @@
 # Use a base image with Python and GPU support (if needed for training)
 FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
 
+#FROM 763104351884.dkr.ecr.eu-west-1.amazonaws.com/pytorch-training:2.5.1-gpu-py311-cu124-ubuntu22.04-sagemaker
+
+
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -39,7 +42,7 @@ RUN python3 -m pip install --upgrade pip
 # Install PyTorch (CUDA version should match your base image)
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
-# Install YOLO dependencies
+# Install YOLO and SAGEMAKER dependencies
 RUN pip install --no-cache-dir \
     numpy \
     matplotlib \
@@ -50,9 +53,14 @@ RUN pip install --no-cache-dir \
     pandas \
     seaborn
 
-RUN wget ${YOLO_BASE_MODEL_URL}} -O /opt/ml/code/${MODEL_CHECKPOINT}
+# Create missing directories
+RUN mkdir -p /opt/ml/code /opt/ml/input /opt/ml/output /opt/ml/model
+
+# Download YOLO checkpoint
+RUN wget ${YOLO_BASE_MODEL_URL} -O /opt/ml/code/${MODEL_CHECKPOINT}
 
 # Install YOLO requirements
+COPY ./requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the training script into the container
@@ -61,4 +69,4 @@ COPY src /opt/ml/code
 WORKDIR /opt/ml/code
 
 # SageMaker runs the training script as the container entry point
-ENTRYPOINT ["python3", "/opt/ml/code/train.py"]
+ENV SAGEMAKER_PROGRAM train.py

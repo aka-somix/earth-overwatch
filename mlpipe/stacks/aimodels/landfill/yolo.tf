@@ -1,7 +1,7 @@
 
 locals {
     yolo_folder = "landfill-yolo"
-    yolo_version = "20250124"
+    yolo_version = "20250127"
 }
 
 #
@@ -43,21 +43,27 @@ resource "null_resource" "build_and_upload_yolo_train" {
   }
 
   provisioner "local-exec" {
-    working_dir = "./tiling"
+    when = create
+    working_dir = "${path.module}/yolo/training"
+    command = "chmod +x build.sh"
+  }
+
+  provisioner "local-exec" {
+    when = create
+    working_dir = "${path.module}/yolo/training"
     command     = <<EOF
                   ./build.sh \
-                    -r ${var.region} 
-                    -e ${var.account_id}.dkr.ecr.${var.region}.amazonaws.com 
-                    -n ${aws_ecr_repository.yolo_train.name} 
-                    -t ${local.yolo_version}
-                    -v ${local.yolo_version}
+                    -r ${var.region}\
+                    -e ${var.account_id}.dkr.ecr.${var.region}.amazonaws.com \
+                    -n ${aws_ecr_repository.yolo_train.name} \
+                    -t ${local.yolo_version} \
+                    -v ${local.yolo_version} \
                     -y "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11m.pt"
-                    -d "" # TODO Add dataset path
 EOF
   }
 }
 
-resource "aws_iam_role" "step_functions_role" {
+resource "aws_iam_role" "yolo_orchestration" {
   name = "${local.resprefix}-training-orch-role"
 
   assume_role_policy = jsonencode({
@@ -75,35 +81,54 @@ resource "aws_iam_role" "step_functions_role" {
 }
 
 # Training Jobs orchestration
-resource "aws_iam_role_policy" "step_functions_policy" {
-  role = aws_iam_role.step_functions_role.id
-
+resource "aws_iam_role_policy" "yolo_orch_access_sagemaker" {
+  role = aws_iam_role.yolo_orchestration.id
+  name = "access-sagemaker"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
+        Effect = "Allow",
         Action = [
           "sagemaker:CreateTrainingJob",
           "sagemaker:DescribeTrainingJob"
-        ]
+        ],
         Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "events:PutTargets",
+          "events:PutRule",
+          "events:DescribeRule"
+        ],
+        Resource = [
+          "arn:aws:events:${var.region}:${var.account_id}:rule/*"
+        ]
+      },
+      {
+        Sid= "AllowStepFunctionPassRoleForSageMaker",
+        Effect= "Allow",
+        Action= "iam:PassRole",
+        Resource= "${var.sagemaker_execution_role.arn}"
       }
     ]
   })
 }
 
-resource "aws_sfn_state_machine" "sagemaker_training_job" {
+resource "aws_sfn_state_machine" "yolo_orchestration" {
   name     = "${local.resprefix}-training-orch"
-  role_arn = aws_iam_role.step_functions_role.arn
+  role_arn = aws_iam_role.yolo_orchestration.arn
 
-  definition = templatefile("${path.module}/state_machine_definition.json", {
-    training_image        = "${aws_ecr_repository.yolo_train.repository_url}"
-    sagemaker_role_arn    = "arn:aws:iam::123456789012:role/service-role/SageMakerExecutionRole" # TODO: Replace with your SageMaker role ARN
-    efs_filesystem_id     = "fs-12345678"                     # TODO Replace with your EFS file system ID
-    efs_mount_path        = "/mnt/efs"                        # TODO Replace with your EFS mount path
-    s3_output_folder_uri  = "s3://your-bucket-name/output/"   # TODO: Replace
+  definition = templatefile("${path.module}/yolo/training/orchestration.json", {
+    training_image        = aws_ecr_repository.yolo_train.repository_url
+    sagemaker_role_arn    = var.sagemaker_execution_role.arn
+    efs_filesystem_id     = var.datasets_efs.file_system_id
+    dataset_efs_path      = "${var.datasets_mount_path}/landfill"
+    s3_output_folder_uri  = "s3://${var.aws_s3_bucket_aimodels.bucket}/trained/${local.yolo_folder}/${local.yolo_version}"
     training_instance_type = "ml.p3.2xlarge"
+    security_groups         = [aws_security_group.sagemaker_outbound.id]
+    subnets                 = var.subnets
   })
 }
 

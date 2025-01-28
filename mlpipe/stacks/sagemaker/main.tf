@@ -50,6 +50,29 @@ resource "aws_iam_role_policy" "s3_custom_access" {
   })
 }
 
+resource "aws_iam_role_policy" "ecr_custom_access" {
+  role = aws_iam_role.sagemaker_execution_role.name
+  name = "ecr-custom-access"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "ecr:Describe*",
+          "ecr:BatchGet*",
+          "ecr:Get*",
+          "ecr:List*"
+        ],
+        Resource = [
+          "arn:aws:ecr:${var.region}:${var.account_id}:repository/*"
+        ]
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role_policy_attachment" "sagemaker_full" {
   role       = aws_iam_role.sagemaker_execution_role.id
   policy_arn = "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
@@ -73,8 +96,6 @@ resource "aws_sagemaker_notebook_instance" "experiments" {
   # Storage Settings
   volume_size = 10
   # Network Settings
-  subnet_id = data.aws_subnets.rfalabs_dmz.ids[0]
-  security_groups = [
-    data.aws_security_group.outbound_everywhere.id
-  ]
+  subnet_id = var.subnets[0]
+  security_groups = var.security_group_ids
 }
