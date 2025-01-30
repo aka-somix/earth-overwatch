@@ -9,6 +9,11 @@ variable "region" {
   type        = string
 }
 
+variable "account_id" {
+  description = "Account Number"
+  type        = string
+}
+
 variable "project_name" {
   description = "project prefix name"
   type        = string

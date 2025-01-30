@@ -3,6 +3,8 @@ locals {
   resprefix = "${var.project_name}-${var.env}-bastion"
 }
 
+data "aws_default_tags" "default_tags" {}
+
 resource "aws_launch_template" "this" {
   name                    = "${local.resprefix}-host"
   image_id                = "ami-04e49d62cf88738f1"
@@ -34,7 +36,7 @@ resource "aws_launch_template" "this" {
   tag_specifications {
     resource_type = "instance"
     tags = merge(
-      var.tags,
+      data.aws_default_tags.default_tags.tags,
       {
         "Name" = "${local.resprefix}-bastionhost"
       }
@@ -44,7 +46,7 @@ resource "aws_launch_template" "this" {
   tag_specifications {
     resource_type = "volume"
     tags = merge(
-      var.tags,
+      data.aws_default_tags.default_tags.tags,
       {
         "Name" = "${local.resprefix}-bastionhost"
       }
@@ -172,6 +174,33 @@ resource "aws_iam_role_policy" "system_access" {
           "arn:aws:s3:::patch-baseline-snapshot-*/*"
         ],
         "Effect" : "Allow"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "efs_access" {
+  name = "efs-access"
+  role = aws_iam_role.this.id
+
+  policy = jsonencode({
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "elasticfilesystem:DescribeFileSystems",
+          "elasticfilesystem:DescribeMountTargets",
+          "elasticfilesystem:DescribeMountTargetSecurityGroups",
+          "elasticfilesystem:DescribeTags",
+          "elasticfilesystem:ClientMount",
+          "elasticfilesystem:ClientWrite",
+          "elasticfilesystem:ClientRead"
+        ],
+        "Resource": [
+          "arn:aws:elasticfilesystem:${var.region}:${var.account_id}:file-system/*",
+          "arn:aws:elasticfilesystem:${var.region}:${var.account_id}:mount-target/*"
+        ]
       }
     ]
   })
