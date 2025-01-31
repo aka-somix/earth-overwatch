@@ -1,60 +1,19 @@
-# Use a base image with Python and GPU support (if needed for training)
-FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
+# SageMaker PyTorch image
+FROM 763104351884.dkr.ecr.eu-west-1.amazonaws.com/pytorch-training:2.5.1-gpu-py311-cu124-ubuntu22.04-sagemaker
 
-#FROM 763104351884.dkr.ecr.eu-west-1.amazonaws.com/pytorch-training:2.5.1-gpu-py311-cu124-ubuntu22.04-sagemaker
-
-
-# Set environment variables
-ENV DEBIAN_FRONTEND=noninteractive \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
-# Define build-time arguments
-ARG DATASET_PATH
+# INPUT VARIABLES
 ARG VERSION
 ARG MODEL_CHECKPOINT="yolo.pt"
 ARG YOLO_BASE_MODEL_URL
 
-# Set these arguments as environment variables to be available in the container
-ENV DATASET_PATH=${DATASET_PATH}
+ENV PATH="/opt/ml/code:${PATH}"
+
+# this environment variable is used by the SageMaker PyTorch container to determine our user code directory.
+ENV SAGEMAKER_SUBMIT_DIRECTORY /opt/ml/code
+
+# Other Env variables
 ENV MODEL_CHECKPOINT=${MODEL_CHECKPOINT}
 ENV VERSION=${VERSION}
-
-# Install basic utilities
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
-    curl \
-    wget \
-    ca-certificates \
-    python3 \
-    python3-pip \
-    python3-venv \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Set up Python environment
-RUN python3 -m pip install --upgrade pip
-
-# Install PyTorch (CUDA version should match your base image)
-RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-
-# Install YOLO and SAGEMAKER dependencies
-RUN pip install --no-cache-dir \
-    numpy \
-    matplotlib \
-    opencv-python-headless \
-    tqdm \
-    boto3 \
-    pyyaml \
-    pandas \
-    seaborn
-
-# Create missing directories
-RUN mkdir -p /opt/ml/code /opt/ml/input /opt/ml/output /opt/ml/model
 
 # Download YOLO checkpoint
 RUN wget ${YOLO_BASE_MODEL_URL} -O /opt/ml/code/${MODEL_CHECKPOINT}
@@ -63,10 +22,8 @@ RUN wget ${YOLO_BASE_MODEL_URL} -O /opt/ml/code/${MODEL_CHECKPOINT}
 COPY ./requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the training script into the container
+# /opt/ml and all subdirectories are utilized by SageMaker, use the /code subdirectory to store your user code.
 COPY src /opt/ml/code
 
-WORKDIR /opt/ml/code
-
-# SageMaker runs the training script as the container entry point
-ENV SAGEMAKER_PROGRAM train.py
+# Defines script entrypoint
+ENV SAGEMAKER_PROGRAM test.py

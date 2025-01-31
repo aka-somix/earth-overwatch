@@ -91,7 +91,8 @@ resource "aws_iam_role_policy" "yolo_orch_access_sagemaker" {
         Effect = "Allow",
         Action = [
           "sagemaker:CreateTrainingJob",
-          "sagemaker:DescribeTrainingJob"
+          "sagemaker:DescribeTrainingJob",
+          "sagemaker:AddTags"
         ],
         Resource = "*"
       },
@@ -121,14 +122,14 @@ resource "aws_sfn_state_machine" "yolo_orchestration" {
   role_arn = aws_iam_role.yolo_orchestration.arn
 
   definition = templatefile("${path.module}/yolo/training/orchestration.json", {
-    training_image        = aws_ecr_repository.yolo_train.repository_url
-    sagemaker_role_arn    = var.sagemaker_execution_role.arn
-    efs_filesystem_id     = var.datasets_efs.file_system_id
-    dataset_efs_path      = "${var.datasets_mount_path}/landfill"
-    s3_output_folder_uri  = "s3://${var.aws_s3_bucket_aimodels.bucket}/trained/${local.yolo_folder}/${local.yolo_version}"
-    training_instance_type = "ml.p3.2xlarge"
-    security_groups         = [aws_security_group.sagemaker_outbound.id]
-    subnets                 = var.subnets
+    training_image          = "${aws_ecr_repository.yolo_train.repository_url}:${local.yolo_version}"
+    sagemaker_role_arn      = var.sagemaker_execution_role.arn
+    efs_filesystem_id       = var.datasets_efs.file_system_id
+    dataset_efs_path        = "${var.datasets_mount_path}/scirone/landfill/v2"
+    s3_output_folder_uri    = "s3://${var.aws_s3_bucket_aimodels.bucket}/trained/${local.yolo_folder}/${local.yolo_version}"
+    training_instance_type  = "ml.p3.2xlarge"
+    security_group_id       = aws_security_group.sagemaker_outbound.id
+    subnet                  = var.subnets[0]
   })
 }
 

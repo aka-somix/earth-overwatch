@@ -7,14 +7,13 @@ usage() {
     echo "  -e ECR registry URI (e.g., 772012299168.dkr.ecr.eu-west-1.amazonaws.com)"
     echo "  -n Repository name"
     echo "  -t Image tag (e.g., latest)"
-    echo "  -d Dataset path"
     echo "  -v Version (e.g., 0.0.0)"
     echo "  -y YOLO base model URL"
     exit 1
 }
 
 # Parse command-line arguments
-while getopts "r:e:n:t:d:v:y:" opt; do
+while getopts "r:e:n:t:v:y:" opt; do
     case $opt in
         r) AWS_REGION="$OPTARG" ;;
         e) ECR_REGISTRY="$OPTARG" ;;
@@ -27,7 +26,7 @@ while getopts "r:e:n:t:d:v:y:" opt; do
 done
 
 # Check if all required arguments are provided
-if [ -z "$AWS_REGION" ] || [ -z "$ECR_REGISTRY" ] || [ -z "$REPOSITORY_NAME" ] || [ -z "$IMAGE_TAG" ] || [ -z "$DATASET_PATH" ] || [ -z "$VERSION" ] || [ -z "$YOLO_BASE_MODEL_URL" ]; then
+if [ -z "$AWS_REGION" ] || [ -z "$ECR_REGISTRY" ] || [ -z "$REPOSITORY_NAME" ] || [ -z "$IMAGE_TAG" ] || [ -z "$VERSION" ] || [ -z "$YOLO_BASE_MODEL_URL" ]; then
     usage
 fi
 

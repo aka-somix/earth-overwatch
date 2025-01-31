@@ -5,13 +5,13 @@ import shutil
 from ultralytics import YOLO
 
 # ---- PARAMETERS ----
-MODEL_CHECKPOINT = environ.get("MODEL_CHECKPOINT", "yolo11s.pt")
+MODEL_CHECKPOINT = environ.get("MODEL_CHECKPOINT", "yolo.pt")
 VERSION = environ.get("VERSION", "0.0.0")
-SAGEMAKER_ARTIFACT_DIR = "/opt/ml/model"
-SAGEMAKER_WORK_DIR = "/opt/ml/code"
+SAGEMAKER_ARTIFACT_DIR = environ.get('SM_MODEL_DIR')
+SAGEMAKER_WORK_DIR = environ.get('SAGEMAKER_SUBMIT_DIRECTORY')
 SAGEMAKER_FAILURE_FILE = "/opt/ml/output/failure"
 SAGEMAKER_OUTPUT_FILE = "/opt/ml/output/data"
-SAGEMAKER_TRAINING_CH_PATH = "/opt/ml/input/training-channel"
+SAGEMAKER_TRAINING_CH_PATH = environ.get('SM_CHANNEL_TRAINING')
 
 # Hyperparameters
 epochs = 5

@@ -27,6 +27,7 @@
                             "FileSystemDataSource": {
                                 "FileSystemId": "${efs_filesystem_id}",
                                 "FileSystemAccessMode": "ro",
+                                "FileSystemType": "EFS",
                                 "DirectoryPath": "${dataset_efs_path}"
                             }
                         }
