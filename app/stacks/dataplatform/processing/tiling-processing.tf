@@ -5,8 +5,7 @@ resource "aws_ecr_repository" "tiling" {
 }
 
 locals {
-  # tiling_imgtag = md5(join("", [for f in fileset("./tiling", "**/*") : md5(file(f))]))
-  tiling_imgtag = md5(timestamp()) # TODO: change this to avoid to build the container everytime
+  tiling_imgtag = md5(join("", sort([for f in fileset("./tiling", "**/*") : md5(filebase64("${path.module}/tiling/${f}"))])))
 }
 
 resource "null_resource" "build_and_upload_image" {
@@ -31,14 +30,6 @@ resource "aws_batch_job_definition" "tiling_job" {
   platform_capabilities = [
     "FARGATE",
   ]
-
-  parameters = {
-    MODE                  = "S3" # <-- Uses S3 for data transfer
-    S3_BUCKET_SOURCE      = "placeholder-bucket-name"
-    S3_BUCKET_DESTINATION = "placeholder-bucket-name"
-    FILE_NAME             = "placeholder"
-  }
-
   container_properties = jsonencode({
     image            = "${aws_ecr_repository.tiling.repository_url}:${local.tiling_imgtag}",
     command          = ["python", "main.py"],
@@ -57,23 +48,35 @@ resource "aws_batch_job_definition" "tiling_job" {
     environment = [
       {
         name  = "TILE_SIZE",
-        value = "800" # <-- This Should be edited as containerOverrde based on desired tiling
+        value = "800"               # <-- This Should be edited as containerOverrde based on desired tiling
       },
       {
         name  = "MODE",
         value = "S3"
       },
       {
-        name  = "S3_BUCKET_SOURCE",
+        name  = "S3_SOURCE_BUCKET",
         value = var.landing_zone_bucket.name
       },
       {
-        name  = "S3_BUCKET_DESTINATION",
+        name  = "S3_DEST_BUCKET",
         value = var.refined_zone_bucket.name
+      },
+      {
+        name  = "S3_SOURCE_PREFIX",
+        value = "examples/"         # <-- This Should be edited as containerOverrde based on desired tiling
+      },
+      {
+        name  = "S3_DEST_PREFIX",
+        value = "examples/tiles/800/"         # <-- This Should be edited as containerOverrde based on desired tiling
       },
       {
         name  = "FILE_NAME",
         value = "placeholder"
+      },
+      {
+        name  = "LOCAL_DIR",
+        value = "/tmp/"
       },
     ],
     logConfiguration = {
@@ -89,7 +92,7 @@ resource "aws_batch_job_definition" "tiling_job" {
   }
 
   retry_strategy {
-    attempts = 3
+    attempts = 1
   }
 }
 
