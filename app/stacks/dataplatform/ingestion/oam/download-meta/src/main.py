@@ -62,6 +62,10 @@ def fetch_metadata(*, start: str, end: str, size: int):
 
 
 def process_data(raw_data):
+
+    def extract_date(timestamp: str):
+        return datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%fZ").date().isoformat()
+
     if "results" not in raw_data:
         logging.error("Invalid data format: 'results' key missing.")
         return None, None
@@ -69,11 +73,7 @@ def process_data(raw_data):
     original_data = raw_data["results"]
     grouped_data = defaultdict(list)
     for entry in original_data:
-        acquisition_day = (
-            datetime.strptime(entry["acquisition_start"], "%Y-%m-%dT%H:%M:%S.%fZ")
-            .date()
-            .isoformat()
-        )
+        acquisition_day = extract_date(entry["acquisition_start"])
         grouped_data[acquisition_day].append(entry)
 
     daygrouped_meta = [{"day": day, "meta": meta} for day, meta in grouped_data.items()]
@@ -81,7 +81,7 @@ def process_data(raw_data):
         {
             "id": entry["_id"],
             "img_url": entry["uuid"],
-            "date": entry["acquisition_start"],
+            "date": extract_date(entry["acquisition_start"]),
         }
         for entry in original_data
     ]
