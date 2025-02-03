@@ -6,7 +6,7 @@ resource "aws_lambda_function" "download_image" {
 
   handler = "main.lambda_handler"
   memory_size = 256
-  timeout = 60
+  timeout = 300
   runtime = "python3.12"
 
   environment {
