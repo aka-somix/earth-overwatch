@@ -58,7 +58,9 @@ for idx, batch_features in enumerate(batches):
         # Retrieve the region ID from the mapping
         region_id = region_mapping.get(region_name)
         if not region_id:
-            print(f"Region '{region_name}' not found in database. Skipping municipality '{name}'.")
+            print(
+                f"Region '{region_name}' not found in database. Skipping municipality '{name}'."
+            )
             continue
 
         # Convert the geometry to WKT (Well-Known Text)
