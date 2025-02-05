@@ -1,0 +1,26 @@
+- name: "oam"
+  path: "oam/metadata"
+  columns:
+    - Name: id
+      Type: string
+    - Name: acquisition_title
+      Type: string
+    - Name: bbox
+      Type: array<double>
+    - Name: geojson
+      Type: string
+    - Name: geometry
+      Type: string
+    - Name: acquisition_start
+      Type: timestamp
+    - Name: acquisition_end
+      Type: timestamp
+    - Name: uploaded_at
+      Type: timestamp
+    - Name: last_processed
+      Type: timestamp
+  partitions:
+    - Name: region
+      Type: string
+    - Name: geohash
+      Type: string
