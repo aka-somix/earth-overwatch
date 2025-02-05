@@ -67,6 +67,7 @@ inputs = {
   region                  = local.config.region.primary
   project_name            = local.config.project_name
   env                     = local.stage.env
+  aws_s3_bucket_glue_packages_name = local.stage.aws_s3_bucket_glue_packages_name
 
   # NETWORK DEPENDENCIES:
   ce_subnets_ids = dependency.network.outputs.rfa_labs_dmz_subnets.ids
@@ -83,4 +84,5 @@ inputs = {
   refined_zone_bucket = dependency.dataplatform.outputs.refined_zone_bucket
   aws_policy_landingzonebucket_readonly = dependency.dataplatform.outputs.aws_policy_landingzonebucket_readonly
   aws_policy_redefinedzone_writeread = dependency.dataplatform.outputs.aws_policy_redefinedzone_writeread
+  aws_policy_aerial_db_access = dependency.dataplatform.outputs.aws_policy_aerial_db_access
 }

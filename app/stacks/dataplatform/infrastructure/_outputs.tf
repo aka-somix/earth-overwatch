@@ -42,3 +42,10 @@ output "aws_policy_aimodelsbucket_readonly" {
 output "aws_policy_aimodelsbucket_writeread" {
   value = aws_iam_policy.aimodelsbucket_writeread
 }
+
+#
+# - Glue Tables
+#
+output "aws_policy_aerial_db_access" {
+  value = aws_iam_policy.aerial_db_access
+}

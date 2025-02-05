@@ -52,3 +52,14 @@ variable "aws_policy_redefinedzone_writeread" {
     arn = string
   })
 }
+
+variable "aws_policy_aerial_db_access" {
+  type = object({
+    id  = string
+    arn = string
+  })
+}
+
+variable "aws_s3_bucket_glue_packages_name" {
+  type = string
+}
