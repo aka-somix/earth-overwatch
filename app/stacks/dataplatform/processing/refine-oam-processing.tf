@@ -21,8 +21,13 @@ resource "aws_glue_job" "refine_oam" {
     "--continuous-log-logGroup"          = aws_cloudwatch_log_group.refine_oam.name
     "--enable-glue-datacatalog"          = "true"
     "--enable-glue-datacatalog"          = "true"
+    # Apache Sedona
     "--additional-python-modules"        = "apache-sedona==1.7.0"
     "--extra-jars"                       = "https://repo1.maven.org/maven2/org/apache/sedona/sedona-spark-shaded-3.3_2.12/1.7.0/sedona-spark-shaded-3.3_2.12-1.7.0.jar,https://repo1.maven.org/maven2/org/datasyslab/geotools-wrapper/1.7.0-28.5/geotools-wrapper-1.7.0-28.5.jar"
+    # Runtime parameters
+    "--source_json_s3_path"              = "s3://${var.landing_zone_bucket.name}/oam/metadata/italy/2024/04/08/1738591402.json"
+    "--destination_s3_path"              = "s3://${var.refined_zone_bucket.name}/oam/metadata/region=italy"
+    "--destination_table"                = "aerial.oam"
   }
 }
 

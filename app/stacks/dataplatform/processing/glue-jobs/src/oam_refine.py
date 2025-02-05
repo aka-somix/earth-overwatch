@@ -9,7 +9,7 @@ from awsglue.context import GlueContext
 from awsglue.utils import getResolvedOptions
 
 from sedona.spark import SedonaContext
-from pyspark.sql.functions import col, explode, expr
+from pyspark.sql.functions import col, explode, expr, current_timestamp
 from pyspark.sql.types import StringType, TimestampType, ArrayType, DoubleType
 
 
@@ -27,12 +27,16 @@ class OAMRefine:
         self.sc = GlueContext(sc)
         self.sedona = sedona
         self.job = Job(self.sc)
-        self.job_name = "OAMR Refine processing"
+        self.job_name = "OAM Refine processing"
 
         self.args = getResolvedOptions(
             sys.argv,
-            [],
+            ["destination_table", "source_json_s3_path", "destination_s3_path"],
         )
+
+        self.source_json_s3_path = self.args["source_json_s3_path"]
+        self.destination_s3_path = self.args["destination_s3_path"]
+        self.destination_table = self.args["destination_table"]
 
         self.job.init(self.job_name, self.args)
 
@@ -44,28 +48,29 @@ class OAMRefine:
         # Get the Glue Logger -> Logs go to the DRIVER stream
         logger = self.sc.get_logger()
 
-        # Read JSON from S3
-        json_path = "s3://scrnts-dev-dataplat-landing-zone-eu-west-1-772012299168/oam/metadata/italy/2024/04/08/1738591402.json"
-
         logger.info("JOB | Read JSON File")
 
-        df = self.sedona.read.option("multiline", "true").json(json_path)
+        json_df = self.sedona.read.option("multiline", "true").json(
+            self.source_json_s3_path
+        )
 
         # Explode the 'meta' array to create separate rows
-        meta_df = df.withColumn("meta", explode(col("meta"))).select("meta.*")
+        newmeta_df = json_df.withColumn("meta", explode(col("meta"))).select("meta.*")
 
         logger.info("JOB | Processing Data")
 
         # Create Geometry from footprint
-        meta_df = meta_df.withColumn("geometry", expr("ST_GeomFromText(footprint)"))
+        newmeta_df = newmeta_df.withColumn(
+            "geometry", expr("ST_GeomFromText(footprint)")
+        )
 
         # Compute geohashing
-        meta_df = meta_df.withColumn(
+        newmeta_df = newmeta_df.withColumn(
             "geohash", expr("ST_GeoHash(geometry, 16)")
         ).repartition("geohash")
 
         # Cast the columns to the correct types
-        final_df = meta_df.select(
+        newmeta_df = newmeta_df.select(
             col("_id").alias("id").cast(StringType()),
             col("title").alias("acquisition_title").cast(StringType()),
             col("acquisition_start").cast(TimestampType()),
@@ -73,15 +78,23 @@ class OAMRefine:
             col("uploaded_at").cast(TimestampType()),
             col("bbox").cast(ArrayType(DoubleType())),
             col("geojson").cast(StringType()),
-            col("geometry").cast(StringType()),
+            col("geometry"),
             col("geohash").cast(StringType()),
-        )
+        ).withColumn("last_processed", current_timestamp())
 
         logger.info("JOB | Exporting Data into Parquet")
 
         # Store DF
-        final_df.write.partitionBy("geohash").format("geoparquet").mode("append").save(
-            "s3://scrnts-dev-dataplat-refined-data-eu-west-1-772012299168/oam/metadata/region=italy"
+        newmeta_df.write.partitionBy("geohash").format("geoparquet").mode(
+            "append"
+        ).save(self.destination_s3_path)
+
+        logger.info(f"JOB | Repartitioning Table {self.destination_table}")
+
+        self.sedona.sql(
+            f"""
+            MSCK REPAIR TABLE {self.destination_table};
+            """
         )
 
         self.job.commit()
