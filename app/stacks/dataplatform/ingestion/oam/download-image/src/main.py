@@ -73,6 +73,7 @@ def lambda_handler(event, _ctx):
     s3.upload_fileobj(response.raw, LANDINGZONE_BUCKET, data_key)
 
     return {
+        "id": meta_id,
+        "date": meta_date,
         "img_s3_uri": f"s3://{LANDINGZONE_BUCKET}/{data_key}",
-        "bbox": [0,0,0,0] # TODO Extract BBOX
     }

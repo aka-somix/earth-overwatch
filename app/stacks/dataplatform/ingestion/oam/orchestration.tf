@@ -1,10 +1,9 @@
-
 resource "aws_sfn_state_machine" "oam_orchestration" {
   name     = "${local.resprefix}-orchestration"
   role_arn = aws_iam_role.oam_orchestration.arn
 
   definition = jsonencode({
-    "Comment": "Orchestrates two Lambda functions with parallel execution",
+    "Comment": "Orchestrates two Lambda functions with parallel execution and SNS notification",
     "StartAt": "Ingest Metadata",
     "States": {
         "Ingest Metadata": {
@@ -33,7 +32,18 @@ resource "aws_sfn_state_machine" "oam_orchestration" {
                         "date.$": "$.date"
                       }
                     },
-                    "End": true
+                    "ResultPath": "$.processed_image",
+                    "Next": "Send SNS Notification"
+                },
+                "Send SNS Notification": {
+                  "Type": "Task",
+                  "Resource": "arn:aws:states:::sns:publish",
+                  "Parameters": {
+                    "TopicArn": "${aws_sns_topic.new_data_uploaded.arn}",
+                    "Message.$": "States.JsonToString($.processed_image)",
+                    "Subject": "Image Processing Completed"
+                  },
+                  "End": true
                 }
               }
           },
@@ -41,7 +51,7 @@ resource "aws_sfn_state_machine" "oam_orchestration" {
           "Next": "SuccessState"
         },
         "SuccessState": {
-        "Type": "Succeed"
+          "Type": "Succeed"
         }
     }
   })
@@ -88,6 +98,13 @@ resource "aws_iam_role_policy" "oam_orchestration_policy" {
           "logs:PutLogEvents"
         ],
         Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "sns:Publish"
+        ],
+        Resource = aws_sns_topic.new_data_uploaded.arn
       }
     ]
   })

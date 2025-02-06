@@ -61,6 +61,16 @@ dependency "dataplatform" {
   }
 }
 
+dependency "ingestionOAM" {
+  config_path = find_in_parent_folders("dataplatform/ingestion/oam")
+
+  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan"]
+  mock_outputs_merge_with_state = contains(["init", "validate", "plan"], get_terraform_command()) ? true : false
+  mock_outputs = {
+    aws_sns_topic_new_data_uploaded = { arn = "mock", id="mock"},
+  }
+}
+
 inputs = {
   # module configuration variables
   account_id              = get_aws_account_id()
@@ -85,4 +95,7 @@ inputs = {
   aws_policy_landingzonebucket_readonly = dependency.dataplatform.outputs.aws_policy_landingzonebucket_readonly
   aws_policy_redefinedzone_writeread = dependency.dataplatform.outputs.aws_policy_redefinedzone_writeread
   aws_policy_aerial_db_access = dependency.dataplatform.outputs.aws_policy_aerial_db_access
+
+  # DATPLATFORM INGESTION DEPENDENCIES:
+  aws_sns_topic_oam_new_data_uploaded = dependency.ingestionOAM.outputs.aws_sns_topic_new_data_uploaded
 }

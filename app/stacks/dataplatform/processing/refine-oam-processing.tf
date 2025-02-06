@@ -45,3 +45,38 @@ resource "aws_cloudwatch_log_group" "refine_oam" {
   name              = "/${var.project_name}/glue/processing/refine-oam"
   retention_in_days = 7
 }
+
+#
+# --- ORCHESTRATION ---
+#
+
+# SQS Queue for oam processing requests pending
+resource "aws_sqs_queue" "oam_processing_requests" {
+  name                      = "${local.resprefix}-oam-refining-requests-queue"
+  fifo_queue                = false
+  message_retention_seconds = 1209600  # 15 days
+  visibility_timeout_seconds = 900  # 15 minutes
+  max_message_size          = 262144  # 256 KB (default max)
+  receive_wait_time_seconds = 10
+}
+resource "aws_sqs_queue_policy" "oam_processing_requests" {
+  queue_url = aws_sqs_queue.oam_processing_requests.id
+  policy    = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "sns.amazonaws.com"
+        },
+        Action   = "sqs:SendMessage",
+        Resource = aws_sqs_queue.oam_processing_requests.arn
+      }
+    ]
+  })
+}
+resource "aws_sns_topic_subscription" "oam_processing_requests" {
+  topic_arn = var.aws_sns_topic_oam_new_data_uploaded.arn
+  protocol  = "sqs"
+  endpoint  = aws_sqs_queue.oam_processing_requests.arn
+}

@@ -63,3 +63,10 @@ variable "aws_policy_aerial_db_access" {
 variable "aws_s3_bucket_glue_packages_name" {
   type = string
 }
+
+variable "aws_sns_topic_oam_new_data_uploaded" {
+  type = object({
+    id  = string
+    arn = string
+  })
+}

@@ -174,3 +174,39 @@ resource "aws_cloudwatch_log_group" "tiling" {
   name              = "/aws/batch/tiling"
   retention_in_days = 1
 }
+
+
+#
+# --- ORCHESTRATION ---
+#
+
+# SQS Queue for tiling requests pending
+resource "aws_sqs_queue" "tiling_requests_queue" {
+  name                      = "${local.resprefix}-tiling-requests-queue"
+  fifo_queue                = false
+  message_retention_seconds = 1209600  # 15 days
+  visibility_timeout_seconds = 900  # 15 minutes
+  max_message_size          = 262144  # 256 KB (default max)
+  receive_wait_time_seconds = 10
+}
+resource "aws_sqs_queue_policy" "tiling_requests_queue" {
+  queue_url = aws_sqs_queue.tiling_requests_queue.id
+  policy    = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "sns.amazonaws.com"
+        },
+        Action   = "sqs:SendMessage",
+        Resource = aws_sqs_queue.tiling_requests_queue.arn
+      }
+    ]
+  })
+}
+resource "aws_sns_topic_subscription" "tiling_requests_subscription_to_oam" {
+  topic_arn = var.aws_sns_topic_oam_new_data_uploaded.arn
+  protocol  = "sqs"
+  endpoint  = aws_sqs_queue.tiling_requests_queue.arn
+}
