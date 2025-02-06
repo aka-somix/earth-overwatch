@@ -80,3 +80,129 @@ resource "aws_sns_topic_subscription" "oam_processing_requests" {
   protocol  = "sqs"
   endpoint  = aws_sqs_queue.oam_processing_requests.arn
 }
+
+resource "aws_sfn_state_machine" "oam_refine_orch" {
+  name     = "${local.resprefix}-oam-refine-orch"
+  role_arn = aws_iam_role.oam_refine_orch.arn
+
+  definition = jsonencode({
+    "StartAt": "RetrieveMessages",
+    "States": {
+      "RetrieveMessages": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::aws-sdk:sqs:receiveMessage",
+        "Parameters": {
+          "QueueUrl": "${aws_sqs_queue.oam_processing_requests.url}",
+          "MaxNumberOfMessages": 10,
+          "WaitTimeSeconds": 10
+        },
+        "ResultPath": "$",
+        "Next": "CheckMessages"
+      },
+      "CheckMessages": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.Messages",
+            "IsPresent": true,
+            "Next": "ProcessMessages"
+          }
+        ],
+        "Default": "EndState"
+      },
+      "ProcessMessages": {
+        "Type": "Map",
+        "InputPath": "$.Messages",
+        "ItemsPath": "$",
+        "MaxConcurrency": 5,
+        "Iterator": {
+          "StartAt": "ExtractBody",
+          "States": {
+            "ExtractBody": {
+              "Type": "Pass",
+              "Parameters": {
+                "Result.$": "States.StringToJson($.Body)"
+              }
+              "Next": "ExtractMessage"
+            },
+            "ExtractMessage": {
+              "Type": "Pass",
+              "Parameters": {
+                "Result.$": "States.StringToJson($.Result.Message)"
+              }
+              "Next": "StartGlueJob"
+            },
+            "StartGlueJob": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters": {
+                "JobName": "${aws_glue_job.refine_oam.id}",
+                "Arguments": {
+                  "--source_json_s3_path.$": "$.Result.meta_s3_uri"
+                }
+              },
+              "ResultPath": null,
+              "End": true
+            }
+          }
+        },
+        "End": true
+      },
+      "EndState": {
+        "Type": "Succeed"
+      }
+    }
+  })
+}
+
+
+resource "aws_iam_role" "oam_refine_orch" {
+  name = "${local.resprefix}-oam-refine-orch-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "states.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+resource "aws_iam_role_policy" "oam_refine_orch_policy" {
+  role = aws_iam_role.oam_refine_orch.name
+  name = "orchestration-main-policy"
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes"
+        ],
+        Resource = "${aws_sqs_queue.oam_processing_requests.arn}"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "glue:StartJobRun"
+        ],
+        Resource = "${aws_glue_job.refine_oam.arn}"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}

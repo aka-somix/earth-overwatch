@@ -92,14 +92,16 @@ def store_to_bronze(data: dict):
     for daygroup in data:
         year, month, day = daygroup["day"].split("-")
         metadata = {"meta": daygroup["meta"]}
-        data_key = (
+        meta_key = (
             f"{PRODUCT}/metadata/{REGION}/{year}/{month}/{day}/{int(time())}.json"
         )
-        logging.info(f"Storing request into s3://{LANDINGZONE_BUCKET}/{data_key}")
+        
+        s3_uri = f"s3://{LANDINGZONE_BUCKET}/{meta_key}"
+        logging.info(f"Storing request into s3://{LANDINGZONE_BUCKET}/{meta_key}")
         s3.put_object(
-            Bucket=LANDINGZONE_BUCKET, Key=data_key, Body=json.dumps(metadata)
+            Bucket=LANDINGZONE_BUCKET, Key=meta_key, Body=json.dumps(metadata)
         )
-
+    return s3_uri
 
 def lambda_handler(event, _ctx):
     """
@@ -126,7 +128,10 @@ def lambda_handler(event, _ctx):
     daygrouped_meta, parsed_meta = process_data(data)
     logging.info(f"Retrieved metadata grouped by day: {daygrouped_meta}")
 
-    store_to_bronze(daygrouped_meta)
+    meta_s3_uri = store_to_bronze(daygrouped_meta)
     logging.info(f"Uploaded metadata to Bucket {LANDINGZONE_BUCKET}")
-
-    return parsed_meta
+    
+    # Merge meta_s3_uri in each item
+    return {
+        "meta": [ { **meta, "meta_s3_uri": meta_s3_uri} for meta in parsed_meta["meta"]]
+    }

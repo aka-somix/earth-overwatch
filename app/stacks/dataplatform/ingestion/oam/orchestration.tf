@@ -9,13 +9,13 @@ resource "aws_sfn_state_machine" "oam_orchestration" {
         "Ingest Metadata": {
           "Type": "Task",
           "Resource": "${aws_lambda_function.download_meta.arn}",
-          "ResultPath": "$.metadata",
+          "ResultPath": "$",
           "Next": "Ingest Images"
         },
         "Ingest Images": {
           "Type": "Map",
           "MaxConcurrency": 7,
-          "InputPath": "$.metadata.meta",
+          "InputPath": "$.meta",
           "ItemProcessor": {
               "ProcessorConfig": {
                 "Mode": "INLINE"
@@ -40,7 +40,11 @@ resource "aws_sfn_state_machine" "oam_orchestration" {
                   "Resource": "arn:aws:states:::sns:publish",
                   "Parameters": {
                     "TopicArn": "${aws_sns_topic.new_data_uploaded.arn}",
-                    "Message.$": "States.JsonToString($.processed_image)",
+                    "Message": {
+                      "id.$": "$.processed_image.id",
+                      "img_s3_uri.$": "$.processed_image.img_s3_uri",
+                      "meta_s3_uri.$": "$.meta_s3_uri"
+                    },
                     "Subject": "Image Processing Completed"
                   },
                   "End": true
@@ -56,6 +60,7 @@ resource "aws_sfn_state_machine" "oam_orchestration" {
     }
   })
 }
+
 
 resource "aws_iam_role" "oam_orchestration" {
   name = "${local.resprefix}-orchestration-role"
