@@ -93,14 +93,14 @@ if __name__ == "__main__":
                 ysize = min(TILE_SIZE, height - yoff)
 
                 # Output file name
-                output_filename = f"{image_file_name}_{xoff}_{yoff}_{xsize}x{ysize}.tif"
+                output_filename = f"{image_file_name}/{xoff}/{yoff}.tif"
                 output_local_path = os.path.join(PROCESSED_DIR, output_filename)
 
                 # Process the tile
                 try:
                     process_tile(dataset, xoff, yoff, xsize, ysize, output_local_path)
                 except Exception as e:
-                    log.error(f"Error processing tile at offset ({xoff}, {yoff}): {e}")
+                    log.error(f"Error processing tile at offsest ({xoff}, {yoff}): {e}")
 
         # Upload generated tiles
         log.info("Uploading generated tiles")
