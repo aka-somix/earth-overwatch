@@ -29,6 +29,11 @@ resource "aws_glue_job" "refine_oam" {
     "--destination_s3_path"              = "s3://${var.refined_zone_bucket.name}/oam/metadata/region=italy"
     "--destination_table"                = "aerial.oam"
   }
+
+  execution_class = "FLEX"
+  execution_property {
+    max_concurrent_runs = 5
+  }
 }
 
 # ------------ UPLOAD SCRIPT TO S3 ------------
@@ -119,17 +124,20 @@ resource "aws_sfn_state_machine" "oam_refine_orch" {
           "StartAt": "ExtractBody",
           "States": {
             "ExtractBody": {
-              "Type": "Pass",
+              "Next": "ExtractMessage",
               "Parameters": {
-                "Result.$": "States.StringToJson($.Body)"
-              }
-              "Next": "ExtractMessage"
+                "Body.$": "States.StringToJson($.Body)",
+                "ReceiptHandle.$": "$.ReceiptHandle"
+              },
+              "Type": "Pass"
             },
             "ExtractMessage": {
-              "Type": "Pass",
               "Parameters": {
-                "Result.$": "States.StringToJson($.Result.Message)"
-              }
+                "Message.$": "States.StringToJson($.Body.Message)",
+                "ReceiptHandle.$": "$.ReceiptHandle"
+              },
+              "Type": "Pass",
+              "ResultPath": "$.Result",
               "Next": "StartGlueJob"
             },
             "StartGlueJob": {
@@ -138,10 +146,19 @@ resource "aws_sfn_state_machine" "oam_refine_orch" {
               "Parameters": {
                 "JobName": "${aws_glue_job.refine_oam.id}",
                 "Arguments": {
-                  "--source_json_s3_path.$": "$.Result.meta_s3_uri"
+                  "--source_json_s3_path.$": "$.Result.Message.meta_s3_uri"
                 }
               },
               "ResultPath": null,
+              "Next": "DeleteMessage"
+            },
+            "DeleteMessage": {
+              "Resource": "arn:aws:states:::aws-sdk:sqs:deleteMessage",
+              "Type": "Task",
+              "Parameters": {
+                "QueueUrl": "${aws_sqs_queue.oam_processing_requests.url}",
+                "ReceiptHandle.$": "$.Result.ReceiptHandle"
+              },
               "End": true
             }
           }
@@ -190,7 +207,8 @@ resource "aws_iam_role_policy" "oam_refine_orch_policy" {
       {
         Effect = "Allow",
         Action = [
-          "glue:StartJobRun"
+          "glue:StartJobRun",
+          "glue:GetJobRun"
         ],
         Resource = "${aws_glue_job.refine_oam.arn}"
       },
@@ -202,6 +220,17 @@ resource "aws_iam_role_policy" "oam_refine_orch_policy" {
           "logs:PutLogEvents"
         ],
         Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "events:PutTargets",
+          "events:PutRule",
+          "events:DescribeRule"
+        ],
+        Resource = [
+          "arn:aws:events:${var.region}:${var.account_id}:rule/*"
+        ]
       }
     ]
   })

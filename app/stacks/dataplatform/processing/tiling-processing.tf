@@ -48,23 +48,19 @@ resource "aws_batch_job_definition" "tiling_job" {
     environment = [
       {
         name  = "TILE_SIZE",
-        value = "800"               # <-- This Should be edited as containerOverrde based on desired tiling
+        value = "800"                         # <-- This Should be edited as containerOverrde based on desired tiling
       },
       {
         name  = "MODE",
         value = "S3"
       },
       {
-        name  = "S3_SOURCE_BUCKET",
-        value = var.landing_zone_bucket.name
+        name  = "S3_SOURCE_URL",
+        value = "s3://placeholder/file.tif"   # <-- This Should be edited as containerOverrde based on desired tiling
       },
       {
         name  = "S3_DEST_BUCKET",
         value = var.refined_zone_bucket.name
-      },
-      {
-        name  = "S3_SOURCE_PREFIX",
-        value = "examples/"         # <-- This Should be edited as containerOverrde based on desired tiling
       },
       {
         name  = "S3_DEST_PREFIX",
@@ -72,7 +68,7 @@ resource "aws_batch_job_definition" "tiling_job" {
       },
       {
         name  = "FILE_NAME",
-        value = "placeholder"
+        value = "placeholder"                 # <-- This Should be edited as containerOverrde based on desired tiling
       },
       {
         name  = "LOCAL_DIR",
@@ -209,4 +205,169 @@ resource "aws_sns_topic_subscription" "tiling_requests_subscription_to_oam" {
   topic_arn = var.aws_sns_topic_oam_new_data_uploaded.arn
   protocol  = "sqs"
   endpoint  = aws_sqs_queue.tiling_requests_queue.arn
+}
+
+resource "aws_sfn_state_machine" "tiling_orchestration" {
+  name     = "${local.resprefix}-tiling-rch"
+  role_arn = aws_iam_role.tiling_orchestration.arn
+
+  definition = jsonencode({
+    "StartAt": "RetrieveMessages",
+    "States": {
+      "RetrieveMessages": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::aws-sdk:sqs:receiveMessage",
+        "Parameters": {
+          "QueueUrl": "${aws_sqs_queue.tiling_requests_queue.url}",
+          "MaxNumberOfMessages": 10,
+          "WaitTimeSeconds": 10
+        },
+        "ResultPath": "$",
+        "Next": "CheckMessages"
+      },
+      "CheckMessages": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.Messages",
+            "IsPresent": true,
+            "Next": "ProcessMessages"
+          }
+        ],
+        "Default": "EndState"
+      },
+      "ProcessMessages": {
+        "Type": "Map",
+        "InputPath": "$.Messages",
+        "ItemsPath": "$",
+        "MaxConcurrency": 5,
+        "Iterator": {
+          "StartAt": "ExtractBody",
+          "States": {
+            "ExtractBody": {
+              "Next": "ExtractMessage",
+              "Parameters": {
+                "Body.$": "States.StringToJson($.Body)",
+                "ReceiptHandle.$": "$.ReceiptHandle"
+              },
+              "Type": "Pass"
+            },
+            "ExtractMessage": {
+              "Parameters": {
+                "Message.$": "States.StringToJson($.Body.Message)",
+                "ReceiptHandle.$": "$.ReceiptHandle"
+              },
+              "Type": "Pass",
+              "ResultPath": "$.Result",
+              "Next": "SubmitBatchJob"
+            },
+            "SubmitBatchJob": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::batch:submitJob.sync",
+              "Parameters": {
+                "JobName": "${aws_batch_job_definition.tiling_job.name}",
+                "JobQueue": "${aws_batch_job_queue.data_processing_primary.id}",
+                "JobDefinition": "${aws_batch_job_definition.tiling_job.arn}",
+                "ContainerOverrides": {
+                  "Environment": [
+                    {
+                      "Name": "S3_SOURCE_URL",
+                      "Value.$": "$.Result.Message.img_s3_uri"
+                    },
+                    {
+                      "Name": "S3_DEST_PREFIX",
+                      "Value": "oam/tiles/800"
+                    }
+                  ]
+                }
+              },
+              "ResultPath": "$.batch",
+              "Next": "DeleteMessage"
+            },
+            "DeleteMessage": {
+              "Resource": "arn:aws:states:::aws-sdk:sqs:deleteMessage",
+              "Type": "Task",
+              "Parameters": {
+                "QueueUrl": "${aws_sqs_queue.tiling_requests_queue.url}",
+                "ReceiptHandle.$": "$.Result.ReceiptHandle"
+              },
+              "End": true
+            }
+          }
+        },
+        "End": true
+      },
+      "EndState": {
+        "Type": "Succeed"
+      }
+    }
+  })
+}
+
+
+resource "aws_iam_role" "tiling_orchestration" {
+  name = "${local.resprefix}-tiling-orch-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "states.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "tiling_orchestration_policy" {
+  role = aws_iam_role.tiling_orchestration.name
+  name = "orchestration-main-policy"
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes"
+        ],
+        Resource = "${aws_sqs_queue.tiling_requests_queue.arn}"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "batch:SubmitJob",
+          "batch:DescribeJobs"
+        ],
+        Resource = [
+          "${aws_batch_job_definition.tiling_job.arn}",
+          "${aws_batch_job_queue.data_processing_primary.arn}"
+        ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "events:PutTargets",
+          "events:PutRule",
+          "events:DescribeRule"
+        ],
+        Resource = [
+          "arn:aws:events:${var.region}:${var.account_id}:rule/*"
+        ]
+      }
+    ]
+  })
 }

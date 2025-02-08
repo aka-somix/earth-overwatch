@@ -2,6 +2,7 @@ import abc
 from os import path
 import boto3
 from libs.logs import log
+from urllib.parse import urlparse
 
 
 class IFileManager(abc.ABC):
@@ -39,19 +40,26 @@ class LocalFileManager(IFileManager):
 class S3FileManager(IFileManager):
     """Manages Files on the local system"""
 
-    def __init__(self, source_bucket: str, dest_bucket: str):
+    def __init__(self, dest_bucket: str):
         super().__init__()
-        self.source_bucket = source_bucket
         self.dest_bucket = dest_bucket
 
         self.client = boto3.client("s3")
 
     def download(self, url, local_path):
-        key = url
-        file_name = url.split("/")[-1]
+        # Parse the URL
+        parsed_url = urlparse(url)
+        # Extract bucket key and filename
+        bucket = parsed_url.netloc
+        key = parsed_url.path.lstrip("/")
+        file_name = key.split("/")[-1]
+        log.debug(f"Bucket: {bucket} | Key: {key}")
+
+        # define where to save the file locally
         local_file_path = path.join(local_path, file_name)
-        log.info(f"Downloading s3://{self.source_bucket}/{key} to {local_file_path}")
-        self.client.download_file(self.source_bucket, key, local_file_path)
+
+        log.info(f"Downloading {url} to {local_file_path}")
+        self.client.download_file(bucket, key, local_file_path)
         return local_file_path
 
     def upload(self, local_path, url):

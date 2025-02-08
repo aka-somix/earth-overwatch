@@ -12,19 +12,18 @@ dotenv.load_dotenv()
 MODE = os.getenv("MODE")
 TILE_SIZE = int(os.getenv("TILE_SIZE") or 600)
 
-S3_SOURCE_BUCKET = os.getenv("S3_SOURCE_BUCKET")
-S3_SOURCE_PREFIX = os.getenv("S3_SOURCE_PREFIX") or ""
-S3_DEST_BUCKET = os.getenv("S3_DEST_BUCKET") or S3_SOURCE_BUCKET
+S3_SOURCE_URL = os.getenv("S3_SOURCE_URL")
+S3_DEST_BUCKET = os.getenv("S3_DEST_BUCKET")
 S3_DEST_PREFIX = os.getenv("S3_DEST_PREFIX")
 
 FILE_NAME = os.getenv("FILE_NAME")
 LOCAL_DIR = os.getenv("LOCAL_DIR") or "./.in"
-PROCESSED_DIR = os.path.join(LOCAL_DIR, 'processed')
+PROCESSED_DIR = os.path.join(LOCAL_DIR, "processed")
 
 
 def validate_s3_mode():
     missing_vals = []
-    for val in [S3_SOURCE_BUCKET, S3_SOURCE_PREFIX, S3_DEST_BUCKET, S3_DEST_PREFIX]:
+    for val in [S3_SOURCE_URL, S3_DEST_BUCKET, S3_DEST_PREFIX]:
         if val is None:
             missing_vals.append(val)
 
@@ -49,15 +48,14 @@ if __name__ == "__main__":
     try:
         if MODE == "LOCAL":
             file_manager = fm.LocalFileManager()
-            source_file = os.path.join(LOCAL_DIR, FILE_NAME)
+            source_url = os.path.join(LOCAL_DIR, FILE_NAME)
             dest_prefix = "./.out"
         elif MODE == "S3":
             validate_s3_mode()
             file_manager = fm.S3FileManager(
-                S3_SOURCE_BUCKET,
                 S3_DEST_BUCKET,
             )
-            source_file = os.path.join(S3_SOURCE_PREFIX, FILE_NAME)
+            source_url = S3_SOURCE_URL
             dest_prefix = S3_DEST_PREFIX
 
         else:
@@ -66,7 +64,7 @@ if __name__ == "__main__":
 
         # Download the GeoTIFF file
         log.info(f"Downloading file {FILE_NAME} from source")
-        local_input_path = file_manager.download(source_file, LOCAL_DIR)
+        local_input_path = file_manager.download(source_url, LOCAL_DIR)
 
         # Open the dataset
         log.info(f"Opening dataset {local_input_path}")
@@ -96,7 +94,7 @@ if __name__ == "__main__":
 
                 # Output file name
                 output_filename = f"{image_file_name}_{xoff}_{yoff}_{xsize}x{ysize}.tif"
-                output_local_path = os.path.join(PROCESSED_DIR ,output_filename)
+                output_local_path = os.path.join(PROCESSED_DIR, output_filename)
 
                 # Process the tile
                 try:
