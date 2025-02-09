@@ -32,6 +32,11 @@ dependency "events-broker" {
       arn = "mock",
       name = "mock"
     },
+    eventrule_new_data_from_aerial = {
+      id = "mock",
+      arn = "mock",
+      name = "mock"
+    },
     eventrule_be_detect_landfills = {
       id = "mock",
       arn = "mock",
@@ -97,6 +102,7 @@ inputs = {
   dataplatform_eventbus               = dependency.events-broker.outputs.dataplatform_eventbus
   backend_eventbus                    = dependency.events-broker.outputs.backend_eventbus
   eventrule_new_image_data_from_synth = dependency.events-broker.outputs.eventrule_new_image_data_from_synth
+  eventrule_new_data_from_aerial      = dependency.events-broker.outputs.eventrule_new_data_from_aerial
   eventrule_be_detect_landfills       = dependency.events-broker.outputs.eventrule_be_detect_landfills
 
   # GEO MODULE DEPENDENICES:

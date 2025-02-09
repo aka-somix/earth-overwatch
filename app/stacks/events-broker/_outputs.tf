@@ -14,6 +14,9 @@ output "backend_eventbus" {
 output "eventrule_new_image_data_from_synth" {
   value = aws_cloudwatch_event_rule.new_img_synth
 }
+output "eventrule_new_data_from_aerial" {
+  value = aws_cloudwatch_event_rule.new_img_synth
+}
 
 #
 # ------------------------------ BACKEND -----------------------------------

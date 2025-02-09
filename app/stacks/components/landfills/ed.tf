@@ -50,7 +50,7 @@ module "lambda_service_new_data_handler" {
   lambda_packages_bucket = var.s3_bucket_lambda_packages
 
   # Global settings
-  eventbridge_bus_arn = var.eventrule_new_image_data_from_synth.arn
+  eventbridge_bus_arn = var.eventrule_new_data_from_aerial.arn
 
   # VPC Config
   vpc = {

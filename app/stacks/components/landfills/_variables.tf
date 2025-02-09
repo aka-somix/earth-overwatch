@@ -47,6 +47,14 @@ variable "eventrule_new_image_data_from_synth" {
   })
 }
 
+variable "eventrule_new_data_from_aerial" {
+  type = object({
+    arn  = string
+    id   = string
+    name = string
+  })
+}
+
 variable "eventrule_be_detect_landfills" {
   type = object({
     arn  = string

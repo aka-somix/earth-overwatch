@@ -18,8 +18,7 @@ export async function sendEvent (payload: EventPayload) {
                 Source: "component/landfill/newdata",
                 DetailType: "detect/landfills",
                 Detail: JSON.stringify({
-                    latitude: payload.latitude,
-                    longitude: payload.longitude,
+                    bbox: payload.bbox,
                     imageS3URL: payload.imageS3URL,
                     source: payload.source
                 }),
