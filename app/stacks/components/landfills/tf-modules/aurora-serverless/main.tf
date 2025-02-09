@@ -8,10 +8,11 @@ resource "aws_rds_cluster" "this" {
   database_name           = var.database_name
   master_username         = var.username
   master_password         = var.password
-  preferred_backup_window = "07:00-09:00"
+  preferred_backup_window = "00:00-07:00"
   backup_retention_period = 1
   skip_final_snapshot     = true
   deletion_protection     = false
+  storage_encrypted       = false
 
   db_subnet_group_name = aws_db_subnet_group.this_rds.name
 
@@ -20,6 +21,7 @@ resource "aws_rds_cluster" "this" {
   serverlessv2_scaling_configuration {
     max_capacity = var.max_capacity
     min_capacity = var.min_capacity
+    seconds_until_auto_pause = 900
   }
 
 

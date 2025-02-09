@@ -1,5 +1,5 @@
 resource "aws_api_gateway_deployment" "this" {
-  rest_api_id = module.wildfire_apigw.api.id
+  rest_api_id = module.geo_data_apigw.api.id
 
   triggers = {
     // Deploy every time
@@ -18,12 +18,12 @@ resource "aws_api_gateway_deployment" "this" {
 
 resource "aws_api_gateway_stage" "env" {
   deployment_id = aws_api_gateway_deployment.this.id
-  rest_api_id   = module.wildfire_apigw.api.id
+  rest_api_id   = module.geo_data_apigw.api.id
   stage_name    = var.env
 }
 
 resource "aws_api_gateway_method_settings" "all" {
-  rest_api_id = module.wildfire_apigw.api.id
+  rest_api_id = module.geo_data_apigw.api.id
   stage_name  = aws_api_gateway_stage.env.stage_name
   method_path = "*/*"
 
@@ -44,7 +44,7 @@ resource "aws_api_gateway_method_settings" "all" {
 resource "aws_api_gateway_usage_plan" "demo" {
   name = local.resprefix
   api_stages {
-    api_id = module.wildfire_apigw.api.id
+    api_id = module.geo_data_apigw.api.id
     stage  = aws_api_gateway_stage.env.stage_name
   }
 }

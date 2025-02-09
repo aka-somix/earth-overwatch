@@ -7,7 +7,8 @@ locals {
 #
 resource "random_password" "db_landfills" {
   length  = 16
-  special = true
+  special = false
+  numeric = true
   upper   = true
   lower   = true
 }
@@ -16,7 +17,9 @@ module "landfills_database" {
 
   cluster_name   = local.resprefix
   database_name  = "main"
-  engine_version = 16.1
+
+  engine_version = 16.3
+  min_capacity = 0
 
   # Connectivity
   database_security_groups_ids = var.security_group_ids

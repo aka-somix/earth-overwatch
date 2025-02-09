@@ -35,7 +35,7 @@ variable "database_security_groups_ids" {
 
 variable "min_capacity" {
   type    = number
-  default = 0.5
+  default = 0
 }
 
 variable "max_capacity" {

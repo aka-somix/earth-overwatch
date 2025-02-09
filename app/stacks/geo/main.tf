@@ -14,7 +14,9 @@ module "geodb" {
 
   cluster_name   = local.resprefix
   database_name  = "geographical"
-  engine_version = 16.1
+  
+  engine_version = 16.3
+  min_capacity = 0
 
   # Connectivity
   database_security_groups_ids = var.security_group_ids
@@ -61,7 +63,7 @@ resource "aws_iam_policy" "access_db_credentials" {
 #
 # --- API Gateway for COMPONENT ---
 #
-module "wildfire_apigw" { # TODO RENAME ME
+module "geo_data_apigw" {
   source          = "./tf-modules/apigw"
   api_name        = "${local.resprefix}-api"
   api_description = "TBD"
@@ -85,7 +87,7 @@ module "lambda_service_geo_data" {
   memory_size                  = 256
   timeout                      = 5
   logs_retention_days          = 30
-  apigw_rest_api               = module.wildfire_apigw.api
+  apigw_rest_api               = module.geo_data_apigw.api
   lambda_packages_bucket       = var.s3_bucket_lambda_packages
 
   # VPC Config
@@ -122,7 +124,7 @@ module "lambda_service_monitor" {
   memory_size                  = 256
   timeout                      = 5
   logs_retention_days          = 30
-  apigw_rest_api               = module.wildfire_apigw.api
+  apigw_rest_api               = module.geo_data_apigw.api
   lambda_packages_bucket       = var.s3_bucket_lambda_packages
 
   # VPC Config

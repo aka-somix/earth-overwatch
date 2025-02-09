@@ -2,7 +2,7 @@
 ## secrets manager configuration
 
 resource "aws_secretsmanager_secret" "this_credentials" {
-  name = "${var.cluster_name}-credentials"
+  name = "${var.cluster_name}-creds"
 
   tags = {
     "Availability" = "process-critical"

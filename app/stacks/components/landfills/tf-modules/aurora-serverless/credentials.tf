@@ -3,11 +3,7 @@
 
 # secrets manager for Valorizzatore Performing db rds
 resource "aws_secretsmanager_secret" "this_credentials" {
-  name = "${var.cluster_name}-credentials"
-
-  tags = {
-    "Availability" = "process-critical"
-  }
+  name = "${var.cluster_name}-creds"
 }
 
 resource "aws_secretsmanager_secret_version" "this_credentials" {
