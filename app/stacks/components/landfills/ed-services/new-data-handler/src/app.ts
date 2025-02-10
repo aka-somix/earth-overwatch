@@ -20,7 +20,7 @@ function parseInput(detail: unknown): ValidInput {
   if (typeof detail !== "object" || detail === null) {
     throw new Error("Invalid detail object");
   }
-  const { bbox, imageS3URL } = detail as { [key: string]: any };
+  const { id, bbox, s3Source } = detail as { [key: string]: any; };
 
   // Internal Function for parsing BBOX from string
   function parseBBoxString(bbox: any): [number, number, number, number] | null {
@@ -41,11 +41,13 @@ function parseInput(detail: unknown): ValidInput {
     }
     return null;
   }
-
+  // create parsed Bbox
   const parsedBBox = parseBBoxString(bbox);
-  if (!parsedBBox || typeof imageS3URL !== "string") {
-    throw new Error("Missing or invalid attributes in detail");
-  }
+
+  if (parsedBBox === null) throw new Error("Invalid input. Could not parse BBox");
+  if (id === undefined || typeof id !== 'string') throw new Error("Invalid input. Could not parse ID");
+  if (s3Source === undefined || typeof s3Source !== 'string') throw new Error("Invalid input. Could not parse S3 Source");
+
 
   const bboxObject: BBox = {
     xmin: parsedBBox[0],
@@ -54,7 +56,7 @@ function parseInput(detail: unknown): ValidInput {
     ymax: parsedBBox[3],
   };
 
-  return { bbox: bboxObject, imageS3URL };
+  return { id, bbox: bboxObject, s3Source };
 }
 
 
@@ -86,7 +88,7 @@ export const handler = async (event: EventBridgeEvent<string, unknown>): Promise
 
   // Step 1 - Input Validation
   logger.info("Validating input");
-  const { bbox, imageS3URL } = parseInput(event.detail);
+  const { bbox, id, s3Source } = parseInput(event.detail);
 
   // Step 2 - Check for data based on the coordinates
   logger.info(`Looking for a monitor for coordinates: ${bbox}`);
@@ -102,8 +104,8 @@ export const handler = async (event: EventBridgeEvent<string, unknown>): Promise
 
     await sendEvent({
       bbox,
-      imageS3URL,
-      source: event.source ?? 'unknown'
+      id,
+      s3Source
     });
 
   } else {

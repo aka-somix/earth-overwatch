@@ -1,13 +1,10 @@
 export interface ValidInput {
+    id: string;
     bbox: BBox
-    imageS3URL: string;
+    s3Source: string;
 }
 
-export interface EventPayload {
-    bbox: BBox
-    imageS3URL: string;
-    source: string;
-}
+export interface EventPayload extends ValidInput { }
 
 export interface BBox {
     xmin: number,

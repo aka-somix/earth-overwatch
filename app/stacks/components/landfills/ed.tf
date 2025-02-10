@@ -42,7 +42,7 @@ module "lambda_service_new_data_handler" {
   function_name       = "${local.resprefix}-ed-new-data-handler"
   architectures       = ["arm64"]
   handler             = "dist/index.handler"
-  memory_size         = 256
+  memory_size         = 128
   timeout             = 5
   logs_retention_days = 30
   # Source code
@@ -97,7 +97,7 @@ module "lambda_detect_landfill" {
   function_name       = "${local.resprefix}-ed-detect-landfill"
   architectures       = ["arm64"]
   handler             = "dist/index.handler"
-  memory_size         = 128
+  memory_size         = 256
   timeout             = 10
   logs_retention_days = 30
   # Source code

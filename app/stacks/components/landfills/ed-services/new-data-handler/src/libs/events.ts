@@ -15,13 +15,9 @@ export async function sendEvent (payload: EventPayload) {
     const eventParams = {
         Entries: [
             {
-                Source: "component/landfill/newdata",
+                Source: "components/landfill/newdata",
                 DetailType: "detect/landfills",
-                Detail: JSON.stringify({
-                    bbox: payload.bbox,
-                    imageS3URL: payload.imageS3URL,
-                    source: payload.source
-                }),
+                Detail: JSON.stringify(payload),
                 EventBusName: EVENT_BUS_NAME,
             },
         ],

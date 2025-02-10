@@ -16,13 +16,14 @@ In order for this Lambda Function to properly work the expected input is:
 {
     detail-type: "dataplatform/<whatever>",      # <-- <whatever> can be replaced with any string
     detail: {
+        id: "ABDAADAD13443A",
+        s3Source: "s3://your/prefix/to/images",
         bbox: [
             xmin,
             ymin,
             xmax,
             ymax
-        ],
-        imageS3URL: "s3://your/path/to/img",    # <-- Optional, defaults to 4326
+        ]
     }
 }
 ```
