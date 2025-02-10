@@ -4,6 +4,7 @@ import { Monitor, MonitorGeoSearch, MonitoringAPI } from "./apis";
 import { API_KEY, MONITORING_API_BASE_PATH } from "./config";
 import { sendEvent } from "./libs/events";
 import { logger } from "./libs/powertools";
+import { MOCKS } from './apis/__mocks__';
 
 /*
  * -- APIS --
@@ -59,7 +60,6 @@ function parseInput(detail: unknown): ValidInput {
   return { id, bbox: bboxObject, s3Source };
 }
 
-
 async function searchMonitorsInBoundingBox (bbox: BBox): Promise<Array<Monitor>> {
 
   const payloads: Array<MonitorGeoSearch> = [
@@ -75,7 +75,9 @@ async function searchMonitorsInBoundingBox (bbox: BBox): Promise<Array<Monitor>>
     { latitude: (bbox.ymin + bbox.ymax) / 2, longitude: (bbox.xmin + bbox.xmax) / 2 },
   ];
 
-  const geoSearchPromises = payloads.map(payload => monitoringApi.default.postMonitoringGeosearch('LANDFILL', payload));
+  // TODO PUT BACK COMMENTED VERSION (removes mock)
+  // const geoSearchPromises = payloads.map(payload => monitoringApi.default.postMonitoringGeosearch('LANDFILL', payload));
+  const geoSearchPromises = payloads.map(payload => MOCKS.postMonitoringGeosearch('LANDFILL', payload));
 
   const geoSearchResults = await Promise.all(geoSearchPromises);
 
