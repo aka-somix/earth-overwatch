@@ -10,7 +10,7 @@
     "upgrade": "pnpm upgrade --latest",
     "lint": "eslint --ignore-path .eslintignore --ext .js,.ts .",
     "build": "esbuild src/app.ts --bundle --platform=node --outfile=dist/index.js",
-    "gen:monitoring": "openapi --input ./docs/monitoring.openapi.yaml -o ./src/apis/ -c axios --name MonitoringAPI"
+    "gen:monitoring": "openapi --input ../src/apis/_openapi/monitoring.openapi.yaml -o ./src/apis/ -c axios --name MonitoringAPI"
   },
   "dependencies": {
     "@aws-sdk/client-eventbridge": "^3.679.0",
