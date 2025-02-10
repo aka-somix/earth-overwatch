@@ -258,6 +258,7 @@ resource "aws_sfn_state_machine" "oam_refine_orch" {
                     "DetailType": "dataplatform/aerial",
                     "Detail": {
                       "id.$": "$.id.S",
+                      "s3Source": "s3://${var.refined_zone_bucket.name}/oam/data"
                       "bbox.$": "$.bbox.S"
                     },
                     "EventBusName": "${var.dataplatform_eventbus.name}"
