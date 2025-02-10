@@ -1,21 +1,21 @@
-import { Event, EventFilter } from "../@types";
+import { Event, EventFilter as LandfillFilter } from "../@types";
 import { customGeometry, executeQuery } from "../libs/database";
 import { logger } from "../libs/powertools";
 
 /**
  * DATABASE ENTITIES
  */
-const eventTable = 'event_detected';
+const landfillTable = 'landfills';
 
 /**
  * DATA ACCESS OBJECT
  */
-export class EventDAO {
+export class LandfillDAO {
 
     /**
      * Helper method to parse filters and dynamically build the WHERE clause
      */
-    private parseFilters(filters: EventFilter): { query: string, params: any[] } {
+    private parseFilters(filters: LandfillFilter): { query: string, params: any[] } {
         let conditions: string[] = [];
         let params: any[] = [];
 
@@ -31,7 +31,7 @@ export class EventDAO {
     /**
      * Get events based on filters
      */
-    public async getEvents(filters: EventFilter): Promise<Array<Event>> {
+    public async getEvents(filters: LandfillFilter): Promise<Array<Event>> {
         // Build the dynamic WHERE clause
         const { query: whereClause, params } = this.parseFilters(filters);
 
@@ -39,17 +39,17 @@ export class EventDAO {
         const query = `
             SELECT id, id_municipality AS municipality_id, source, detection_time, 
                    ${customGeometry.toGeoJSON('area')} AS geometry
-            FROM ${eventTable}
+            FROM ${landfillTable}
             ${whereClause};
         `;
 
         logger.info(`QUERY: ${query}`);
 
         // Execute the query
-        const eventsFound = await executeQuery(query, params);
+        const landfillsFound = await executeQuery(query, params);
 
         // Map the result to the Event type
-        return eventsFound.map((e) => ({
+        return landfillsFound.map((e) => ({
             id: e.id,
             municipality_id: e.municipality_id,
             detected_from: e.source,
@@ -61,11 +61,11 @@ export class EventDAO {
     /**
      * Get event by ID
      */
-    public async getEventByID(id: number): Promise<Event | null> {
+    public async getLandfillById(id: number): Promise<Event | null> {
         const query = `
             SELECT id, id_municipality AS municipality_id, source, detection_time, 
                    ${customGeometry.toGeoJSON('area')} AS geometry
-            FROM ${eventTable}
+            FROM ${landfillTable}
             WHERE id = $1
             LIMIT 1;
         `;

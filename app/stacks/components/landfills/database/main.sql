@@ -1,4 +1,4 @@
-CREATE TABLE event_detected (
+CREATE TABLE landfills (
     id 					SERIAL PRIMARY KEY,
     id_municipality     INT NOT NULL,
     source              VARCHAR(20),                            -- SAT | SIG

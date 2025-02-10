@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express";
-import { EventDAO } from "../DAO/Event";
+import { LandfillDAO } from "../DAO/Landfill";
 import { logger } from '../libs/powertools';
 import { EventFilter } from "../@types";
 import { getDbClient } from "../libs/database";
@@ -18,7 +18,7 @@ router.get("/", async (req: Request, res: Response) => {
             municipality: queryParams.municipality?.toString()
         }
 
-        const events = await new EventDAO().getEvents(filters);
+        const events = await new LandfillDAO().getEvents(filters);
 
         // RESPONSE
         logger.info(`Processed ${req.method} Request for path: ${req.path}`);
@@ -41,7 +41,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 
         const numericId = parseInt(id);
 
-        const eventFound = await new EventDAO().getEventByID(numericId);
+        const eventFound = await new LandfillDAO().getLandfillById(numericId);
 
         if (eventFound === null) {
             res.status(404).json({
