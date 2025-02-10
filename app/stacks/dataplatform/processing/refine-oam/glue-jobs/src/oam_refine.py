@@ -7,9 +7,11 @@ import sys
 from awsglue.job import Job
 from awsglue.context import GlueContext
 from awsglue.utils import getResolvedOptions
+from awsglue.dynamicframe import DynamicFrame
 
 from sedona.spark import SedonaContext
-from pyspark.sql.functions import col, explode, expr, current_timestamp
+from pyspark.sql import DataFrame
+from pyspark.sql.functions import col, explode, expr, current_timestamp, lit
 from pyspark.sql.types import StringType, TimestampType, ArrayType, DoubleType
 
 
@@ -31,33 +33,68 @@ class OAMRefine:
 
         self.args = getResolvedOptions(
             sys.argv,
-            ["destination_table", "source_json_s3_path", "destination_s3_path"],
+            ["destination_table", "source_json_s3_path", "destination_s3_path", "dynamodb_destination_table"],
         )
 
         self.source_json_s3_path = self.args["source_json_s3_path"]
         self.destination_s3_path = self.args["destination_s3_path"]
         self.destination_table = self.args["destination_table"]
+        self.dynamodb_destination_table = self.args["dynamodb_destination_table"]
+
+        # Get the Glue Logger -> Logs go to the DRIVER stream
+        self.log = self.sc.get_logger()
 
         self.job.init(self.job_name, self.args)
 
-    def run(self):
-        """
-        Glue Job function executed at each run
-        """
-
-        # Get the Glue Logger -> Logs go to the DRIVER stream
-        logger = self.sc.get_logger()
-
-        logger.info("JOB | Read JSON File")
+    def __extract_json(self) -> DataFrame:
+        self.log.info("JOB | Read JSON File")
 
         json_df = self.sedona.read.option("multiline", "true").json(
             self.source_json_s3_path
         )
 
         # Explode the 'meta' array to create separate rows
-        newmeta_df = json_df.withColumn("meta", explode(col("meta"))).select("meta.*")
+        return json_df.withColumn("meta", explode(col("meta"))).select("meta.*")
 
-        logger.info("JOB | Processing Data")
+    def __load_to_datalake(self, df: DataFrame):
+        self.log.info("JOB | Exporting Datalake in Parquet format (SNAPPY)")
+
+        df.write.partitionBy("geohash").format("geoparquet").mode("append").save(
+            self.destination_s3_path
+        )
+
+        self.log.info(f"JOB | Repartitioning Table {self.destination_table}")
+
+        self.sedona.sql(
+            f"""
+            MSCK REPAIR TABLE {self.destination_table};
+            """
+        )
+
+    def __load_to_dynamodb(self, df: DataFrame):
+        # Add status
+        dyf_with_status = DynamicFrame.fromDF(df.withColumn("status", lit("PENDING")), self.sc, "add_status_and_turn_into_dyf")
+    
+        # Write to dynamodb
+        self.sc.write_dynamic_frame.from_options(
+            frame=dyf_with_status,
+            connection_type="dynamodb",
+            connection_options={
+                "dynamodb.output.tableName": self.dynamodb_destination_table,
+                "dynamodb.throughput.write.percent": "1.0",
+            },
+        )
+
+    def run(self):
+        """
+        Glue Job function executed at each run
+        """
+
+        # -- EXTRACT
+        newmeta_df = self.__extract_json()
+
+        # -- TRANSFORM
+        self.log.info("JOB | Processing Data")
 
         # Create Geometry from footprint
         newmeta_df = newmeta_df.withColumn(
@@ -82,20 +119,13 @@ class OAMRefine:
             col("geohash").cast(StringType()),
         ).withColumn("last_processed", current_timestamp())
 
-        logger.info("JOB | Exporting Data into Parquet")
+        # -- LOAD
+        self.__load_to_datalake(newmeta_df)
 
-        # Store DF
-        newmeta_df.write.partitionBy("geohash").format("geoparquet").mode(
-            "append"
-        ).save(self.destination_s3_path)
+        # Extract only id and bbox
+        newdata_event_df = newmeta_df.select("id", col("bbox").cast(StringType()),)
 
-        logger.info(f"JOB | Repartitioning Table {self.destination_table}")
-
-        self.sedona.sql(
-            f"""
-            MSCK REPAIR TABLE {self.destination_table};
-            """
-        )
+        self.__load_to_dynamodb(newdata_event_df)
 
         self.job.commit()
 

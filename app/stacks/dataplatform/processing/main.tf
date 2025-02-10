@@ -71,27 +71,31 @@ resource "aws_iam_role_policy_attachment" "aws_glue_service_role" {
   role       = aws_iam_role.processing_glue_jobs.id
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
 }
+resource "aws_iam_role_policy_attachment" "aws_glue_service_role_readwrite_oamsnf" {
+  role = aws_iam_role.processing_glue_jobs.name
+  policy_arn = aws_iam_policy.oam_store_and_forward_writeread.arn
+}
 
 resource "aws_iam_role_policy" "glue_job_cloudwatch" {
   role = aws_iam_role.processing_glue_jobs.name
   name = "cloudwatch-custom-access"
   policy = jsonencode({
-    "Statement": [
-        {
-            "Action": [
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents",
-                "logs:DescribeLogGroups",
-                "logs:DescribeLogStreams",
-                "logs:GetLogEvents"
-            ],
-            "Effect": "Allow",
-            "Resource": [
-                "arn:aws:logs:eu-west-1:772012299168:log-group:/${var.project_name}*"
-            ]
-        }
-    ],
-    "Version": "2012-10-17"
-})
+      "Statement": [
+          {
+              "Action": [
+                  "logs:CreateLogGroup",
+                  "logs:CreateLogStream",
+                  "logs:PutLogEvents",
+                  "logs:DescribeLogGroups",
+                  "logs:DescribeLogStreams",
+                  "logs:GetLogEvents"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                  "arn:aws:logs:eu-west-1:772012299168:log-group:/${var.project_name}*"
+              ]
+          }
+      ],
+      "Version": "2012-10-17"
+  })
 }

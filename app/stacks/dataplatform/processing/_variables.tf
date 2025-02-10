@@ -70,3 +70,10 @@ variable "aws_sns_topic_oam_new_data_uploaded" {
     arn = string
   })
 }
+
+variable "dataplatform_eventbus" {
+  type = object({
+    id   = string
+    name = string
+  })
+}
