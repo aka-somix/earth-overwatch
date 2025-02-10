@@ -15,43 +15,48 @@ const monitoringApi = new MonitoringAPI({
   }
 });
 
-/**
- * Parses an detail object and extracts the required fields for Input.
- * If any attribute is missing or of the wrong type, the function throws an error.
- * 
- * @param detail - An unknown detail object expected to contain latitude, longitude, and imageS3URL fields.
- * @returns An Input object containing the validated latitude, longitude, and imageS3URL.
- * 
- * @throws Error if the detail is null, not an object, or lacks any required attributes with correct types.
- */
-function parseInput (detail: unknown): ValidInput {
-  if (typeof detail !== 'object' || detail === null) {
+
+function parseInput(detail: unknown): ValidInput {
+  if (typeof detail !== "object" || detail === null) {
     throw new Error("Invalid detail object");
   }
-  const { bbox, imageS3URL } = detail as { [key: string]: any; };
+  const { bbox, imageS3URL } = detail as { [key: string]: any };
 
-  function isValidBBoxArray (bbox: any): bbox is [number, number, number, number] {
-    return (
-      Array.isArray(bbox) &&
-      bbox.length === 4 &&
-      bbox.every((val) => typeof val === "number")
-    );
+  // Internal Function for parsing BBOX from string
+  function parseBBoxString(bbox: any): [number, number, number, number] | null {
+    if (typeof bbox !== "string") {
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(bbox);
+      if (
+        Array.isArray(parsed) &&
+        parsed.length === 4 &&
+        parsed.every((val) => typeof val === "number")
+      ) {
+        return parsed as [number, number, number, number];
+      }
+    } catch {
+      return null;
+    }
+    return null;
   }
 
-  if (!isValidBBoxArray(bbox) || typeof imageS3URL !== "string") {
+  const parsedBBox = parseBBoxString(bbox);
+  if (!parsedBBox || typeof imageS3URL !== "string") {
     throw new Error("Missing or invalid attributes in detail");
   }
 
-  // Convert bbox array to BBox interface format
   const bboxObject: BBox = {
-    xmin: bbox[0],
-    ymin: bbox[1],
-    xmax: bbox[2],
-    ymax: bbox[3],
+    xmin: parsedBBox[0],
+    ymin: parsedBBox[1],
+    xmax: parsedBBox[2],
+    ymax: parsedBBox[3],
   };
 
   return { bbox: bboxObject, imageS3URL };
 }
+
 
 async function searchMonitorsInBoundingBox (bbox: BBox): Promise<Array<Monitor>> {
 

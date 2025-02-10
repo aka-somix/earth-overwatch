@@ -79,6 +79,13 @@ resource "aws_cloudwatch_event_target" "send_from_synth_data" {
   event_bus_name = var.dataplatform_eventbus.name
 }
 
+resource "aws_cloudwatch_event_target" "send_from_aerial_data" {
+  target_id      = "to-newdata-handler"
+  arn            = module.lambda_service_new_data_handler.arn
+  rule           = var.eventrule_new_data_from_aerial.name
+  event_bus_name = var.dataplatform_eventbus.name
+}
+
 # [END] NEW DATA HANDLER
 
 
