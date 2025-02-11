@@ -13,10 +13,16 @@ import torch
 from ultralytics import YOLO
 
 
+#
+# --- PARAMETERS
+#
+CHECKPOINT_FILENAME = "checkpoint.pt"
+
+
 def model_fn(model_dir):
     print("Istantiating YOLO Model")
     env = os.environ
-    model = YOLO(os.path.join(model_dir, "yolo11m.pt"))
+    model = YOLO(os.path.join(model_dir, CHECKPOINT_FILENAME))
     return model
 
 

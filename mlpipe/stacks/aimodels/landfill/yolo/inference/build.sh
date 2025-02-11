@@ -27,7 +27,7 @@ BUCKET_NAME=$1
 VERSION=$2
 FOLDER=$3
 
-YOLO_CHECKPOINT_URL=https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11m.pt
+S3_MODEL_CHECKPOINT_URL=s3://${BUCKET_NAME}/checkpoints/yolo/landfills-detection/2025-02-10.pt
 
 separator
 echo "Using S3 Bucket Name: $BUCKET_NAME"
@@ -41,8 +41,8 @@ echo "Creating Build"
 separator
 
 mkdir -p .build/code
-wget ${YOLO_CHECKPOINT_URL} -O yolo11m.pt
-mv yolo11m.pt .build/
+aws s3 cp ${S3_MODEL_CHECKPOINT_URL} checkpoint.pt
+mv checkpoint.pt .build/
 cp code/inference.py .build/code/
 cp code/requirements.txt .build/code/
 
