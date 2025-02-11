@@ -30,7 +30,11 @@ module "landfills_database" {
   password = random_password.db_landfills.result
 }
 
-# Policy for accessing credentials
+#
+# --- POLICIES ---
+#
+
+# Policy for accessing database credentials
 resource "aws_iam_policy" "access_db_credentials" {
   name        = "${local.resprefix}-access-credentials"
   description = "Policy to allow access to retrieve and decrypt landfills DB credentials"
@@ -45,6 +49,36 @@ resource "aws_iam_policy" "access_db_credentials" {
         ]
         Effect   = "Allow"
         Resource = "${module.landfills_database.credentials.arn}"
+      }
+    ]
+  })
+}
+
+# Send Events to Backend BUS
+resource "aws_iam_policy" "send_events_backend" {
+  name = "${local.resprefix}-send-events-to-be-ebus"
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : "events:PutEvents",
+        "Resource" : "${var.backend_eventbus.arn}"
+      }
+    ]
+  })
+}
+
+# Invoke Sagemaker endpoints
+resource "aws_iam_policy" "sagemaker_invoke" {
+  name = "${local.resprefix}-invoke-sagemaker-endpoint"
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : "sagemaker:InvokeEndpoint",
+        "Resource" : "arn:aws:sagemaker:${var.region}:${var.account_id}:endpoint/*"
       }
     ]
   })
