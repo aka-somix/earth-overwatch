@@ -1,6 +1,8 @@
 import os
 import boto3
 import logging
+import hashlib
+
 
 # --- Logger config for AWS ---
 logging.getLogger().setLevel(logging.INFO)
@@ -72,8 +74,10 @@ def lambda_handler(event, _context):
             tile_s3_uri = f"s3://{bucket_name}/{obj['Key']}"
             
             entry = {
-                "Id": obj["Key"].split("/")[-1],  # Using the filename as ID
+                # Encode s3 key as md5 for id, so each tile is represented univocally
+                "Id": hashlib.md5(obj["Key"].split("/")[-1].encode()).hexdigest(),
                 "MessageBody": {
+                    "originalImageId": detection_id,
                     "originalBbox": original_bbox,
                     "tileS3Uri": tile_s3_uri,
                 },

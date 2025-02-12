@@ -93,77 +93,49 @@ resource "aws_sfn_state_machine" "detection_orchestration" {
   role_arn = aws_iam_role.detection_orchestration.arn
 
   definition = jsonencode({
-  "StartAt": "Parse Input Event",
-  "States": {
-    "Parse Input Event": {
-      "Type": "Task",
-      "Resource": "arn:aws:states:::lambda:invoke",
-      "Parameters": {
-        "FunctionName": "arn:aws:lambda:eu-west-1:772012299168:function:ParseInputEvent",
-        "Payload.$": "$"
-      },
-      "Next": "Fetch Bucket Map",
-      "ResultPath": "$.Parsed"
-    },
-    "Fetch Bucket Map": {
-      "Type": "Map",
-      "Label": "FetchBucketMap",
-      "MaxConcurrency": 100,
-      "ItemReader": {
-        "Resource": "arn:aws:states:::s3:listObjectsV2",
+    "StartAt": "Parse Tiles from Input",
+    "States": {
+      "Parse Tiles from Input": {
         "Parameters": {
-          "Bucket.$": "$.Parsed.Bucket",
-          "Prefix.$": "$.Parsed.Prefix"
-        }
-      },
-      "ItemBatcher": {
-        "MaxItemsPerBatch": 10,
-        "MaxInputBytesPerBatch": 262144
-      },
-      "ItemProcessor": {
-        "ProcessorConfig": {
-          "Mode": "DISTRIBUTED",
-          "ExecutionType": "STANDARD"
+          "FunctionName": "${aws_lambda_function.parse_detection_input.arn}",
+          "Payload.$": "$"
         },
-        "StartAt": "S3 Object Batch Processing",
-        "States": {
-          "S3 Object Batch Processing": {
-            "ItemProcessor": {
-              "ProcessorConfig": {
-                "Mode": "INLINE"
-              },
-              "StartAt": "Parse Object into SQS Message",
-              "States": {
-                "Parse Object into SQS Message": {
-                  "End": true,
-                  "Parameters": {
-                    "Id.$": "States.Hash($.Etag, 'MD5')",
-                    "MessageBody.$": "$.Key"
-                  },
-                  "Type": "Pass"
-                }
-              }
-            },
-            "ItemsPath": "$.Items",
-            "Type": "Map",
-            "Next": "SendMessageBatch"
-          },
-          "SendMessageBatch": {
-            "End": true,
-            "Parameters": {
-              "Entries.$": "$",
-              "QueueUrl": "https://sqs.eu-west-1.amazonaws.com/772012299168/scrnts-dev-landfill-images-to-predict"
-            },
-            "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessageBatch",
-            "Type": "Task"
-          }
-        }
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Type": "Task",
+        "OutputPath": "$.Payload",
+        "Next": "Batch and distribute Tiles"
       },
-      "End": true
+      "Batch and distribute Tiles": {
+        "Type": "Map",
+        "ItemProcessor": {
+          "ProcessorConfig": {
+            "Mode": "DISTRIBUTED",
+            "ExecutionType": "STANDARD"
+          },
+          "StartAt": "Send Detection Request on Tiles Batch",
+          "States": {
+            "Send Detection Request on Tiles Batch": {
+              "Type": "Task",
+              "Parameters": {
+                "Entries.$": "$.Items",
+                "QueueUrl": "${aws_sqs_queue.images_to_predict.url}"
+              },
+              "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessageBatch",
+              "End": true
+            }
+          }
+        },
+        "End": true,
+        "Label": "BatchanddistributeTiles",
+        "MaxConcurrency": 1000,
+        "ItemBatcher": {
+          "MaxItemsPerBatch": 10,
+          "MaxInputBytesPerBatch": 262144
+        },
+        "ItemsPath": "$.Entries"
+      }
     }
-  }
-}
-)
+  })
 }
 
 
@@ -191,13 +163,30 @@ resource "aws_iam_role_policy" "detection_orchestration_policy" {
     Version = "2012-10-17",
     Statement = [
       {
-        Effect = "Allow",
-        Action = [
-          "s3:*",
-          "sqs:*",
-          "states:*"
+        "Effect": "Allow",
+        "Action": [
+          "sqs:SendMessage",
+          "sqs:SendMessageBatch",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage"
         ],
-        Resource = "*"
+        "Resource": "${aws_sqs_queue.images_to_predict.arn}"
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "states:StartExecution",
+          "states:DescribeExecution",
+          "states:StopExecution"
+        ],
+        "Resource": "arn:aws:states:${var.region}:${var.account_id}:stateMachine:${local.resprefix}-*"
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "lambda:InvokeFunction"
+        ],
+        "Resource": "${aws_lambda_function.parse_detection_input.arn}"
       },
       {
         Effect = "Allow",
