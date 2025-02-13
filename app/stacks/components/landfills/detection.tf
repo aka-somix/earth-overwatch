@@ -72,8 +72,6 @@ resource "aws_cloudwatch_log_group" "parse_detection_input" {
   retention_in_days = 7
 }
 
-
-
 #
 # --- ORCHESTRATION ---
 #

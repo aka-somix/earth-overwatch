@@ -1,7 +1,7 @@
 
 locals {
     yolo_folder = "landfill-yolo"
-    yolo_version = "20250211"
+    yolo_version = "20250213"
 }
 
 #
