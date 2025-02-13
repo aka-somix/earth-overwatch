@@ -4,4 +4,5 @@
 /* eslint-disable */
 
 export type { Error } from './models/Error';
-export type { Event } from './models/Event';
+export type { Landfill } from './models/Landfill';
+export type { NewLandfillRequest } from './models/NewLandfillRequest';

@@ -1,77 +1,100 @@
-openapi: 3.0.1
+openapi: 3.1.0
 info:
-  title: Wildfire Detection Service
+  title: Landfills Detection Service
   version: 1.0.0
 
 paths:
-  /events:
+  /landfills:
     get:
-      summary: Retrieve all detected events
-      description: Get a list of all events detected, with optional filtering by municipality and detection time.
+      summary: Retrieve all detected landfills
+      description: Get a list of all landfills detected, with optional filtering by municipality and detection time.
       parameters:
         - name: municipality
           in: query
-          description: Municipality ID to filter events.
+          description: Municipality ID to filter landfills.
           required: false
           schema:
             type: integer
         - name: detection_time
           in: query
-          description: Filter events by detection time (start and end timestamp).
+          description: Filter landfills by detection time (start and end timestamp).
           required: false
           schema:
             type: string
             format: date-time
       responses:
-        '200':
-          description: A list of detected events.
+        "200":
+          description: A list of detected landfills.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Event'
-        '400':
+                  $ref: "#/components/schemas/Landfill"
+        "400":
           description: Invalid parameters or filters.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
-  /events/{id}:
+    post:
+      summary: Add a new landfill
+      description: Submit a new landfill detection record.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewLandfillRequest"
+      responses:
+        "201":
+          description: Landfill successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Landfill"
+        "400":
+          description: Invalid request body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /landfills/{id}:
     get:
-      summary: Retrieve event details
-      description: Get detailed information about a specific event, including its location as a polygon (for SAT) or point (for SIG).
+      summary: Retrieve landfill details
+      description: Get detailed information about a specific landfill, including its location as a polygon (for SAT) or point (for SIG).
       parameters:
         - name: id
           in: path
           required: true
-          description: The ID of the event to retrieve.
+          description: The ID of the landfill to retrieve.
           schema:
             type: integer
       responses:
-        '200':
-          description: Event details along with its geometry information.
+        "200":
+          description: landfill details along with its geometry information.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Event'
-        '404':
-          description: Event not found.
+                $ref: "#/components/schemas/Landfill"
+        "404":
+          description: landfill not found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '400':
-          description: Invalid event ID.
+                $ref: "#/components/schemas/Error"
+        "400":
+          description: Invalid landfill ID.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
 components:
   schemas:
-    Event:
+    Landfill:
       type: object
       properties:
         id:
@@ -80,11 +103,11 @@ components:
         detected_from:
           type: string
           description: Detection type.
-          example: SAT
+          example: aerial
         detection_time:
           type: string
           format: date-time
-          description: Time when the event was detected.
+          description: Time when the landfill was detected.
           example: "2023-10-13T12:00:00Z"
         municipality_id:
           type: integer
@@ -93,7 +116,7 @@ components:
         geometry:
           oneOf:
             - type: object
-              description: Geometry for SAT type events (Polygon)
+              description: Geometry of detected landfills (Polygon)
               properties:
                 type:
                   type: string
@@ -109,7 +132,7 @@ components:
                         type: number
                         example: [45.12345, -73.12345]
             - type: object
-              description: Geometry for SIG type events (Point)
+              description: Point representing a signaled landfill (Point)
               properties:
                 type:
                   type: string
@@ -120,10 +143,27 @@ components:
                   items:
                     type: number
                     example: [45.12345, -73.12345]
-
+    NewLandfillRequest:
+      type: object
+      properties:
+        municipality_id:
+          type: integer
+          description: ID of the municipality.
+          example: 1001
+        detected_from:
+          type: string
+          description: Detection type.
+          example: aerial
+        detection_time:
+          type: string
+          format: date-time
+          description: Time when the landfill was detected.
+          example: "2023-10-13T12:00:00Z"
+        geometry:
+          oneOf:
     Error:
       type: object
       properties:
         message:
           type: string
-          example: "Invalid event ID."
+          example: "Invalid landfill ID."

@@ -1,8 +1,8 @@
 
 import express from 'express';
 import { BASE_PATH } from "./config";
-import { logger } from "./libs/powertools";
 import router from "./controller";
+import { logger } from "./libs/powertools";
 import cors = require("cors");
 import serverless = require("serverless-http");
 

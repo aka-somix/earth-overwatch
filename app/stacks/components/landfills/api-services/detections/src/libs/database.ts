@@ -29,6 +29,9 @@ export const customGeometry = {
   },
   toGeoJSON(column: string) {
     return `ST_AsGeoJSON(${column})`;
+  },
+  fromGeoJSON(stringifiedGeojson: string) {
+    return `ST_GeomFromGeoJSON(${stringifiedGeojson})`;
   }
 };
 

@@ -1,6 +1,6 @@
 export * from './openapi';
 
-export interface EventFilter {
+export interface LandfillFilter {
     dateFrom?: string;
     dateTo?: string;
     municipality?: string;

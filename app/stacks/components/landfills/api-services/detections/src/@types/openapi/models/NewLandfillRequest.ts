@@ -2,20 +2,19 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type Event = {
-    id?: number;
+export type NewLandfillRequest = {
+    /**
+     * ID of the municipality.
+     */
+    municipality_id?: number;
     /**
      * Detection type.
      */
     detected_from?: string;
     /**
-     * Time when the event was detected.
+     * Time when the landfill was detected.
      */
     detection_time?: string;
-    /**
-     * ID of the municipality.
-     */
-    municipality_id?: number;
     geometry?: any;
 };
 

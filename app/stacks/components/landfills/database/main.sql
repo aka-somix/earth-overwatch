@@ -1,3 +1,5 @@
+CREATE EXTENSION postgis;
+
 CREATE TABLE landfills (
     id 					SERIAL PRIMARY KEY,
     id_municipality     INT NOT NULL,
