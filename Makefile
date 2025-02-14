@@ -28,6 +28,10 @@ help:
 clean:
 	./scripts/cleanup.sh
 
+# SSH tunnel to Database from localhost
+dbconn:
+	./scripts/dbconn.sh
+
 # Translate commands for app and mlpipe
 APP_MLPIPE_COMMAND := $(shell echo $(COMMAND) | sed -e 's/up/apply/' -e 's/down/destroy/')
 
