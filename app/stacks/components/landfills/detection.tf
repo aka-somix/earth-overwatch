@@ -1,6 +1,8 @@
 #
 # --- SERVICES DEFINITION ---
 #
+
+# Parse Detection Input Service
 resource "aws_lambda_function" "parse_detection_input" {
   function_name     = "${local.resprefix}-parse-detection-input"
   role              = aws_iam_role.parse_detection_input.arn
@@ -71,6 +73,113 @@ resource "aws_cloudwatch_log_group" "parse_detection_input" {
   name              = "/aws/lambda/${local.resprefix}-parse-detection-input"
   retention_in_days = 7
 }
+
+
+# Run Detection Service
+resource "aws_lambda_function" "run_detection" {
+  function_name     = "${local.resprefix}-run-detection"
+  role              = aws_iam_role.run_detection.arn
+  filename          = data.archive_file.run_detection_source.output_path
+  source_code_hash  = data.archive_file.run_detection_source.output_sha256
+
+  handler = "main.lambda_handler"
+  memory_size = 128
+  timeout = 300
+  runtime = "python3.12"
+
+  environment {
+    variables = {
+      DETECTION_QUEUE_URL     = aws_sqs_queue.images_to_predict.url
+      GEO_API_BASE_URL        = "TODO"
+      LANDFILL_API_BASE_URL   = "TODO"
+      SAGEMAKER_ENDPOINT      = "TODO"
+      TILES_PER_RUN           = 2
+    }
+  }
+
+  depends_on = [ aws_cloudwatch_log_group.run_detection]
+}
+
+resource "null_resource" "run_detection_build" {
+  # Specify triggers if needed, such as files or other resources the script depends on
+  triggers = {
+    timestamp() = "${timestamp()}"
+  }
+
+  provisioner "local-exec" {
+    working_dir = "${path.module}/detection/run-detection"
+    command     = "chmod +x build.sh && ./build.sh"
+  }
+}
+
+data "archive_file" "run_detection_source" {
+  type        = "zip"
+  source_dir  = "${path.module}/detection/run-detection/src"
+  output_path = "${path.module}/detection/run-detection/bin/out.zip"
+  excludes    = [".terragrunt*"]
+  depends_on  = [null_resource.run_detection_build]
+}
+
+resource "aws_iam_role" "run_detection" {
+  name = "${local.resprefix}-run-detection"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+# Lambda Basics Policy (Cloudwatch logs)
+resource "aws_iam_role_policy_attachment" "run_detection_basic_execution" {
+  role       = aws_iam_role.run_detection.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy" "run_detection_main_policy" {
+  role = aws_iam_role.run_detection.name
+  name = "lambda-main-policy"
+  policy = jsonencode({
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket",
+                "s3:GetObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::*",
+                "arn:aws:s3:::*/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:DeleteMessage",
+                "sqs:DeleteMessageBatch",
+                "sqs:GetQueueAttributes"
+            ],
+            "Resource": "${aws_sqs_queue.images_to_predict.arn}"
+        }
+    ]
+  })
+}
+
+# -------------- Cloudwatch Log Group --------------
+resource "aws_cloudwatch_log_group" "run_detection" {
+  name              = "/aws/lambda/${local.resprefix}-run-detection"
+  retention_in_days = 7
+}
+
 
 #
 # --- ORCHESTRATION ---

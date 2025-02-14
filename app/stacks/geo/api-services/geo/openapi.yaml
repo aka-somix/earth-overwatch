@@ -24,7 +24,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Municipality'
+                  $ref: "#/components/schemas/Municipality"
         400:
           description: Invalid region ID
         404:
@@ -47,7 +47,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Municipality'
+                $ref: "#/components/schemas/Municipality"
         404:
           description: Municipality not found
 
@@ -63,7 +63,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Region'
+                  $ref: "#/components/schemas/Region"
 
   /geo/regions/{id}:
     get:
@@ -82,7 +82,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Region'
+                $ref: "#/components/schemas/Region"
         404:
           description: Region not found
 
