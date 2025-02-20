@@ -1,4 +1,4 @@
-import { Municipality, MunFilters } from "../@types";
+import { Geometry, MunFilters, Municipality } from "../@types";
 import { customGeometry, executeQuery } from "../database/client";
 import { logger } from "../libs/powertools";
 /**
@@ -15,7 +15,7 @@ export class MunicipalityDAO {
     /**
      * Helper method to parse filters and dynamically build the WHERE clause
      */
-    private parseFilters(filters: MunFilters): { query: string, params: any[] } {
+    private parseFilters(filters: MunFilters): { query: string, params: any[]; } {
         let conditions: string[] = [];
         let params: any[] = [];
 
@@ -43,7 +43,7 @@ export class MunicipalityDAO {
             ${whereClause};
         `;
 
-        logger.info(`QUERY: ${query}`)
+        logger.info(`QUERY: ${query}`);
 
         // Execute the query
         const munFound = await executeQuery(query, params);
@@ -52,7 +52,7 @@ export class MunicipalityDAO {
         return munFound.map((m) => ({
             id: m.id,
             name: m.name,
-            boundaries: m.boundaries,
+            boundaries: JSON.parse(m.boundaries),
         }));
     }
 
@@ -82,7 +82,32 @@ export class MunicipalityDAO {
             id: m.municipalityId,
             name: m.municipalityName,
             region: m.regionName ?? 'Unknown Region',
-            boundaries: m.boundaries,
+            boundaries: JSON.parse(m.boundaries),
         };
+    }
+
+    public async searchMunicipalitiesFromGeometry(g: Geometry): Promise<Array<Municipality>> {
+
+        const query = `
+            SELECT m.id AS "municipalityId", m.name AS "municipalityName", ${customGeometry.toGeoJSON('m.boundaries')} AS boundaries
+            FROM ${municipalityTable} m
+            WHERE ST_Intersects(
+                boundaries,
+                ST_GeomFromGeoJSON($1)
+            );
+        `;
+        const queryArgs = [g];
+
+        logger.info(`QUERY: ${query}, ARGS: ${JSON.stringify(queryArgs)}`);
+
+        // Execute the query
+        const munFound = await executeQuery(query, queryArgs);
+
+        // Map the result to the Municipality type
+        return munFound.map((m) => ({
+            id: m.municipalityId,
+            name: m.municipalityName,
+            boundaries: JSON.parse(m.boundaries),
+        }));
     }
 }

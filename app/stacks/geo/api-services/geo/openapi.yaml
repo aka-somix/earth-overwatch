@@ -30,6 +30,33 @@ paths:
         404:
           description: No municipalities found for the given region
 
+  /geo/municipalities/search:
+    post:
+      summary: Searches for municipalities inside a given GeoJSON polygon
+      description: |-
+        This method is used to map a delimited area into a set of municipalities. The expected
+        input is a GeoJSON polygon, that could be covered entirely inside a single municipality, or intersect
+        multiple municipalities.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SearchMunicipalitiesBody"
+      responses:
+        200:
+          description: List of municipalities inside the given polygon
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Municipality"
+        400:
+          description: Invalid request payload
+        404:
+          description: No municipalities found within the given polygon
+
   /geo/municipalities/{id}:
     get:
       summary: Get municipality by ID
@@ -88,6 +115,32 @@ paths:
 
 components:
   schemas:
+    Geometry:
+      type: object
+      description: GeoJSON formatted Geometry of a polygonal area
+      properties:
+        type:
+          type: string
+          example: Polygon
+        coordinates:
+          type: array
+          description: Coordinates of the polygon
+          items:
+            type: array
+            items:
+              type: array
+              items:
+                type: number
+                example: [45.12345, -73.12345, 45.13234, -73.10, 45.12345]
+
+    SearchMunicipalitiesBody:
+      type: object
+      properties:
+        geometry:
+          $ref: "#/components/schemas/Geometry"
+      required:
+        - geometry
+
     Municipality:
       type: object
       properties:

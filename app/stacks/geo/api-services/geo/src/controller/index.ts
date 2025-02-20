@@ -1,9 +1,10 @@
 import { Request, Response, Router } from "express";
 import { logger } from '../libs/powertools';
-import { getDbClient } from "../database/client";
-import { RegionDAO } from "../DAO/Region";
+import { RegionDAO } from "../dao/Region";
 import { MunFilters } from "../@types";
-import { MunicipalityDAO } from "../DAO/Municipality";
+import { MunicipalityDAO } from "../dao/Municipality";
+import { searchMunicipalitiesSchema } from "../validations";
+import { parse } from "path";
 const router = Router();
 
 /**
@@ -76,6 +77,37 @@ router.get("/municipalities", async (req: Request, res: Response) => {
     } catch (error: unknown) {
         logger.error(`Error while processing ${req.method} Request for path: ${req.path}: ${typeof error}`, { error });
         res.status(500).json(error);
+    }
+});
+
+/**
+ * Search municipalities inside a given GeoJSON polygon.
+ */
+router.post("/municipalities/search", async (req: Request, res: Response) => {
+    try {
+        logger.info(`Processing ${req.method} Request for path: ${req.path}`);
+
+        // Validate request body using Zod
+        const parsedBody = searchMunicipalitiesSchema.safeParse(req.body);
+
+        if (!parsedBody.success) {
+            logger.warn(`Validation failed for ${req.method} Request: ${JSON.stringify(parsedBody.error.format())}`);
+            return res.status(400).json({ error: "Invalid request body", details: parsedBody.error.format() });
+        }
+
+        // Call DAO method to search municipalities
+        const municipalities = await new MunicipalityDAO().searchMunicipalitiesFromGeometry(parsedBody.data.geometry);
+
+        if (municipalities.length === 0) {
+            return res.status(404).json({ message: "No municipalities found within the given polygon." });
+        }
+
+        logger.info(`Processed ${req.method} Request for path: ${req.path}`);
+        res.status(200).json(municipalities);
+
+    } catch (error) {
+        logger.error(`Error while processing ${req.method} Request for path: ${req.path}: ${typeof error}`, { error });
+        res.status(500).json({ message: "Internal server error" });
     }
 });
 

@@ -1,4 +1,4 @@
-import { Region, RegionDB } from "../@types";
+import { Geometry, Municipality, Region, RegionDB } from "../@types";
 import { customGeometry, executeQuery } from '../database/client'; // Import the db client and helpers
 
 /**
@@ -50,4 +50,5 @@ export class RegionDAO {
             boundaries: region.boundaries
         };
     }
+
 }
