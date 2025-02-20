@@ -1,4 +1,4 @@
-openapi: 3.1.0
+openapi: 3.0.0
 info:
   title: Landfills Detection Service
   version: 1.0.0
@@ -74,13 +74,13 @@ paths:
             type: integer
       responses:
         "200":
-          description: landfill details along with its geometry information.
+          description: Landfill details along with its geometry information.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Landfill"
         "404":
-          description: landfill not found.
+          description: Landfill not found.
           content:
             application/json:
               schema:
@@ -92,8 +92,55 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+    put:
+      summary: Update landfill validity
+      description: Update the validity status of a specific landfill (VALID or INVALID).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the landfill to update.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: "#/components/schemas/DetectionValidity"
+              required:
+                - status
+      responses:
+        "200":
+          description: Landfill status updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Landfill"
+        "400":
+          description: Invalid request body or landfill ID.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Landfill not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   schemas:
+    DetectionValidity:
+      type: string
+      enum:
+        - VALID
+        - INVALID
+        - UNKNOWN
     Landfill:
       type: object
       properties:
@@ -113,6 +160,15 @@ components:
           type: integer
           description: ID of the municipality.
           example: 1001
+        confidence:
+          type: float
+          description: The confidence of the detection (normalized between 0 and 1)
+          example: 0.85
+        status:
+          type: object
+          $ref: "#/components/schemas/DetectionValidity"
+        imageURI:
+          type: string
         geometry:
           oneOf:
             - type: object
@@ -143,6 +199,11 @@ components:
                   items:
                     type: number
                     example: [45.12345, -73.12345]
+      required:
+        - id
+        - municipality_id
+        - geometry
+        - status
     NewLandfillRequest:
       type: object
       properties:
@@ -159,8 +220,21 @@ components:
           format: date-time
           description: Time when the landfill was detected.
           example: "2023-10-13T12:00:00Z"
+        confidence:
+          type: float
+          description: The confidence of the detection (normalized between 0 and 1)
+          example: 0.85
+        imageURI:
+          type: string
         geometry:
           oneOf:
+      required:
+        - municipality_id
+        - detected_from
+        - detection_time
+        - confidence
+        - geometry
+        - imageURI
     Error:
       type: object
       properties:
