@@ -55,7 +55,7 @@ def process_message(tile: TileMetadata):
                 "detection_time": "2025-03-01",
                 "detected_from": "TEST",
                 "confidence": 0,
-                "imageURI": tile.image_id,
+                "imageURI": tile.s3_uri_tile,
             }
         )
         response = landfillservice.create_landfill(landfill_request_body)

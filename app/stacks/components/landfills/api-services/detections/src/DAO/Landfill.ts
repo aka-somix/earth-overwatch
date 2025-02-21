@@ -1,4 +1,4 @@
-import { Landfill, LandfillFilter, NewLandfillRequest } from "../@types";
+import { DetectionValidity, Landfill, LandfillFilter, NewLandfillRequest } from "../@types";
 import { customGeometry, executeQuery } from "../libs/database";
 import { logger } from "../libs/powertools";
 
@@ -12,10 +12,23 @@ const landfillTable = 'landfills';
  */
 export class LandfillDAO {
 
+    private statusFromString (status: string): DetectionValidity {
+        switch (status) {
+            case 'U':
+                return DetectionValidity.UNKNOWN;
+            case 'V':
+                return DetectionValidity.VALID;
+            case 'I':
+                return DetectionValidity.INVALID;
+            default:
+                throw new Error("Invalid Status from Database");
+        }
+    }
+
     /**
      * Helper method to parse filters and dynamically build the WHERE clause
      */
-    private parseFilters(filters: LandfillFilter): { query: string, params: any[] } {
+    private parseFilters (filters: LandfillFilter): { query: string, params: any[]; } {
         let conditions: string[] = [];
         let params: any[] = [];
 
@@ -38,7 +51,7 @@ export class LandfillDAO {
         // SQL query
         const query = `
             SELECT id, id_municipality AS municipality_id, source, detection_time, 
-                   ${customGeometry.toGeoJSON('area')} as geometry
+                   ${customGeometry.toGeoJSON('area')} as geometry, confidence, status, image_uri
             FROM ${landfillTable}
             ${whereClause};
         `;
@@ -55,6 +68,9 @@ export class LandfillDAO {
             detected_from: e.source,
             detection_time: e.detection_time.toISOString(),
             geometry: JSON.parse(e.geometry),
+            status: this.statusFromString(e.status),
+            confidence: parseInt(e.confidence) / 100,
+            imageURI: e.image_uri
         }));
     }
 
@@ -64,7 +80,7 @@ export class LandfillDAO {
     public async getLandfillById (id: number): Promise<Landfill | null> {
         const query = `
             SELECT id, id_municipality AS municipality_id, source, detection_time, 
-                   ${customGeometry.toGeoJSON('area')} as geometry
+                   ${customGeometry.toGeoJSON('area')} as geometry, confidence, status, image_uri
             FROM ${landfillTable}
             WHERE id = $1
             LIMIT 1;
@@ -85,6 +101,9 @@ export class LandfillDAO {
             detected_from: e.source,
             detection_time: e.detection_time.toISOString(),
             geometry: JSON.parse(e.geometry),
+            status: this.statusFromString(e.status),
+            confidence: parseInt(e.confidence) / 100,
+            imageURI: e.image_uri
         };
     }
 
@@ -94,17 +113,22 @@ export class LandfillDAO {
     public async createLandfill (landfill: NewLandfillRequest): Promise<Landfill> {
         // Generate Query
         const query = `
-            INSERT INTO ${landfillTable} (id_municipality, source, detection_time, area, point_location)
-            VALUES ($1, $2, $3, ${customGeometry.fromGeoJSON('$4')}, null)
-            RETURNING id_municipality, source, detection_time, ${customGeometry.toGeoJSON('area')} as geometry
+            INSERT INTO ${landfillTable} (id_municipality, source, detection_time, area, point_location, confidence, image_uri, status)
+            VALUES ($1, $2, $3, ${customGeometry.fromGeoJSON('$4')}, null, $5, $6, $7)
+            RETURNING id_municipality, source, detection_time, ${customGeometry.toGeoJSON('area')} as geometry, confidence, image_uri, status
         `;
 
         const queryArgs = [
             landfill.municipality_id,
             landfill.detected_from,
             landfill.detection_time,
-            landfill.geometry
+            landfill.geometry,
+            landfill.confidence,
+            landfill.imageURI,
+            "U"                    //UNKNOWN
         ];
+
+        logger.info(`QUERY: ${query}, ARGS: ${JSON.stringify(queryArgs)}`);
 
         // Execute the query
         const dbResult = await executeQuery(query, queryArgs);
@@ -120,6 +144,9 @@ export class LandfillDAO {
             detected_from: landfillCreated.source,
             detection_time: landfillCreated.detection_time.toISOString(),
             geometry: JSON.parse(landfillCreated.geometry),
+            status: this.statusFromString(landfillCreated.status),
+            confidence: parseInt(landfillCreated.confidence) / 100,
+            imageURI: landfillCreated.image_uri
         };
     }
 }

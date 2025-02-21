@@ -2,8 +2,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { DetectionValidity } from './DetectionValidity';
 export type Landfill = {
-    id?: number;
+    id: number;
     /**
      * Detection type.
      */
@@ -15,8 +16,14 @@ export type Landfill = {
     /**
      * ID of the municipality.
      */
-    municipality_id?: number;
-    geometry?: ({
+    municipality_id: number;
+    /**
+     * The confidence of the detection (normalized between 0 and 1)
+     */
+    confidence?: number;
+    status: DetectionValidity;
+    imageURI?: string;
+    geometry: ({
         type?: string;
         /**
          * Coordinates of the polygon

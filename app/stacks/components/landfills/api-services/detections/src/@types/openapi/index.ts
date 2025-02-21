@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
+export { DetectionValidity } from './models/DetectionValidity';
 export type { Error } from './models/Error';
 export type { Landfill } from './models/Landfill';
 export type { NewLandfillRequest } from './models/NewLandfillRequest';
