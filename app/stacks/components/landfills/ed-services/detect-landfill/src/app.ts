@@ -1,10 +1,10 @@
-import { Callback, Context, EventBridgeEvent } from "aws-lambda";
+import { Context, EventBridgeEvent } from "aws-lambda";
 import { DetectionResults, GeoJSONPolygon, InputDetail } from "./@types";
 import { InferenceAPI } from "./libs/inference";
 import { logger } from "./libs/powertools";
 import { getStreamFromS3Url } from "./libs/s3";
 
-function parseAndValidate (input: unknown): InputDetail {
+function parseAndValidate(input: unknown): InputDetail {
     // Validate the input is an object
     if (typeof input !== "object" || input === null) {
         throw new Error("Input must be a non-null object");

@@ -89,11 +89,12 @@ resource "aws_lambda_function" "run_detection" {
 
   environment {
     variables = {
+      API_KEY                 = data.aws_api_gateway_api_key.personal.value
       DETECTION_QUEUE_URL     = aws_sqs_queue.images_to_predict.url
-      GEO_API_BASE_URL        = "TODO"
-      LANDFILL_API_BASE_URL   = "TODO"
+      GEO_API_BASE_URL        = var.geo_apigw_endpoint
+      LANDFILL_API_BASE_URL   = aws_api_gateway_stage.env.invoke_url
       SAGEMAKER_ENDPOINT      = "TODO"
-      TILES_PER_RUN           = 2
+      TILES_PER_RUN           = 1
     }
   }
 

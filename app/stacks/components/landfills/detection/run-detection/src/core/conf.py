@@ -8,6 +8,7 @@ import logging
 
 # -- ENVIRONMENT --
 TILES_PER_RUN = int(environ.get("TILES_PER_RUN", "1"))
+API_KEY = environ.get("API_KEY", "not-set")
 LANDFILL_API_BASE_URL = environ.get("LANDFILL_API_BASE_URL", "not-set")
 GEO_API_BASE_URL = environ.get("GEO_API_BASE_URL", "not-set")
 SAGEMAKER_ENDPOINT = environ.get("SAGEMAKER_ENDPOINT", "not-set")

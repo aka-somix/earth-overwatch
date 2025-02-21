@@ -14,13 +14,53 @@ sys.path.append(".ext")
 
 # Imports
 from core.aws import sqs
-from tiles.process import QueueProcessor
-from core.conf import logs, TILES_PER_RUN, DETECTION_QUEUE_URL
+from tiles.process import QueueProcessor, TileMetadata
+from core.conf import (
+    logs,
+    TILES_PER_RUN,
+    DETECTION_QUEUE_URL,
+    GEO_API_BASE_URL,
+    LANDFILL_API_BASE_URL,
+)
+from services.geo import GeoService
+from services.landfills import NewLandfillRequest, LandfillService
+
+# Inject Services Objects
+geoservice = GeoService(GEO_API_BASE_URL)
+landfillservice = LandfillService(LANDFILL_API_BASE_URL)
 
 
-def process_message(m):
-    print(m)
-    logs.info(m)
+def process_message(tile: TileMetadata):
+
+    logs.info(f"Processing {tile}")
+
+    # Step 1 - Get Municipality from message
+    tile_bbox = tile.get_tile_bbox(mode="GEOJSON")
+    municipalities_list = geoservice.search_municipalities(tile_bbox["geometry"])
+
+    logs.info(f"Municipalities retrieved: {municipalities_list}")
+
+    # Extract Ids
+    municipalities_ids = [m["id"] for m in municipalities_list]
+
+    logs.info(f"TILE INSIDE MUNICIPALITIES: {municipalities_ids}")
+
+    # TODO RUN INFERENCE on image
+
+    for m_id in municipalities_ids:
+        landfill_request_body = NewLandfillRequest(
+            payload={
+                "municipality_id": m_id,
+                "geometry": tile_bbox["geometry"],
+                "detection_time": "2025-03-01",
+                "detected_from": "TEST",
+                "confidence": 0,
+                "imageURI": tile.image_id,
+            }
+        )
+        response = landfillservice.create_landfill(landfill_request_body)
+
+        logs.info(f"Created landfill. Response: {response}")
 
 
 def lambda_handler(event, _ctx):
