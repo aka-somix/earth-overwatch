@@ -1,36 +1,5 @@
 from core.conf import logs
-from core.geojson import bbox_to_geojson
-import json
-
-
-class TileMetadata(object):
-    """Manages the Tile Metadata for inference"""
-
-    def __init__(self, data):
-        try:
-            data_dict = json.loads(data)
-            self.image_id = data_dict["originalImageId"]
-            self._bbox = data_dict["originalBbox"]
-            self.s3_uri_tile = data_dict["tileS3Uri"]
-        except Exception as e:
-            logs.error(f"Error: {e}")
-            raise RuntimeError("Could not parse JSON payload into dict") from e
-
-    def get_image_bbox(self, *, mode: str):
-        if mode == "GEOJSON":
-            return bbox_to_geojson(self._bbox)
-        else:
-            return self._bbox
-
-    def get_tile_bbox(self, *, mode: str):
-        # TODO Implement it better
-        return self.get_image_bbox(mode=mode)
-
-    def __str__(self):
-        return f"TILE METADATA: |{self.image_id} | {self._bbox.__str__()} | {self.s3_uri_tile}"
-
-    def __repr__(self):
-        return self.__str__()
+from tiles import TileMetadata
 
 
 class QueueProcessor(object):

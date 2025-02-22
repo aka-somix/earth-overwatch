@@ -1,5 +1,22 @@
 import json
+from abc import ABC, abstractmethod
 from core.conf import logs
+
+
+class InferenceService(ABC):
+    @abstractmethod
+    def run(self, payload):
+        raise NotImplementedError()
+
+
+class DUMMYInferenceService(InferenceService):
+    """
+    DUMMY SERVICE; Just for testing
+    """
+
+    def run(self, payload):
+        logs.info(f"DUMMY RUN with payload {payload}")
+        return []
 
 
 class SagemakerPayload:
@@ -13,22 +30,35 @@ class SagemakerPayload:
         self.content_type = content_type
         self.body = body
 
+    def get_body_as_json(self) -> str:
+        return json.dumps(self.body)
+
     def __str__(self):
-        return (
-            f"SagemakerPayload[ ContentType: {self.content_type} | Body: {self.body} ]"
+        decoded_body = (
+            self.body.decode("utf-8")
+            if isinstance(self.body, bytes)
+            else str(self.body)
         )
+        truncated_body = (
+            decoded_body[:100] + "..." if len(decoded_body) > 100 else decoded_body
+        )
+        return f"SagemakerPayload[ ContentType: {self.content_type} | Body: {truncated_body} ]"
+
+    def __repr__(self):
+        return self.__str__()
 
 
-class InferenceSagemaker(object):
-    def __init__(self, client, endpoint: str):
-        self.client = client
+class SagemakerInferenceService(InferenceService):
+    def __init__(self, sagemaker, endpoint: str):
+        self.sagemaker = sagemaker
         self.endpoint = endpoint
 
     def run(self, payload: SagemakerPayload):
-        response = self.client.invoke_endpoint(
+
+        response = self.sagemaker.invoke_endpoint(
             EndpointName=self.endpoint,
             ContentType=payload.content_type,
-            Body=payload.body,
+            Body=payload.get_body_as_json(),
         )
         logs.info(f"Response from endpoint: {response}")
 

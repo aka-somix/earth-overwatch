@@ -36,7 +36,7 @@ class LandfillService:
 
         logs.debug(f"HTTP POST Request to {url} successfull")
 
-        if response.status_code == 201:
+        if response.status_code in [200, 201]:
             return response.json()
         else:
             return {"error": response.json()}

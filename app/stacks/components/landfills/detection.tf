@@ -93,7 +93,7 @@ resource "aws_lambda_function" "run_detection" {
       DETECTION_QUEUE_URL     = aws_sqs_queue.images_to_predict.url
       GEO_API_BASE_URL        = var.geo_apigw_endpoint
       LANDFILL_API_BASE_URL   = aws_api_gateway_stage.env.invoke_url
-      SAGEMAKER_ENDPOINT      = "TODO"
+      SAGEMAKER_ENDPOINT      = "scrnts-dev-landfill-yolo-endpoint"     # TODO Remove Hard coding
       TILES_PER_RUN           = 1
     }
   }
@@ -117,7 +117,7 @@ data "archive_file" "run_detection_source" {
   type        = "zip"
   source_dir  = "${path.module}/detection/run-detection/src"
   output_path = "${path.module}/detection/run-detection/bin/out.zip"
-  excludes    = [".terragrunt*"]
+  excludes    = ["*/**/.terragrunt*", ".terragrunt*"]
   depends_on  = [null_resource.run_detection_build]
 }
 
@@ -142,6 +142,11 @@ resource "aws_iam_role" "run_detection" {
 resource "aws_iam_role_policy_attachment" "run_detection_basic_execution" {
   role       = aws_iam_role.run_detection.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy_attachment" "run_detection_sagemaker_invoke" {
+  role       = aws_iam_role.run_detection.name
+  policy_arn = aws_iam_policy.sagemaker_invoke.arn
 }
 
 resource "aws_iam_role_policy" "run_detection_main_policy" {
