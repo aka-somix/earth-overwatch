@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 
 const navigateToHome = () => {
-  router.push('/home');
+  router.push('/map');
 };
 </script>
 
@@ -19,7 +19,7 @@ const navigateToHome = () => {
     <div class="content">
       <h1 class="title">🌍 Earth Overwatch</h1>
       <p class="subtitle">Dive into the world's environmental challenges and take action.</p>
-      <button @click="navigateToHome" class="cta-button">Start Exploring</button>spo
+      <button @click="navigateToHome" class="cta-button">Start Exploring</button>
     </div>
   </div>
 </template>

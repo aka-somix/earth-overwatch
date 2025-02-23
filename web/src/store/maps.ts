@@ -27,6 +27,8 @@ export const mapsStore = defineStore('map', () => {
   // Initialize map and add default layers
   const initMap = async () => {
     map = L.map('map').setView([39.363849580093145, 16.226570855657855], 9);
+    map.zoomControl.remove()
+    map.addControl(L.control.zoom({position: 'bottomright'}));
     map.addLayer(layers['satellite']);
 
     // Call API to fetch regions

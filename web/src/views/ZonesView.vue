@@ -3,7 +3,7 @@
 <template>
   <div class="container">
     <div style="height: 2vh;"></div>
-    <h1>About</h1>
+    <h1>Zones</h1>
   </div>
 </template>
 
