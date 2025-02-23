@@ -28,7 +28,7 @@ class DetectionController(object):
         self.inference_service = inference_service
         self.image_service = image_service
 
-    def __pixel_to_coordinates(self, ref_bbox: BBox, px_bbox_list: list) -> BBox:
+    def __pixel_to_coordinates(self, ref_bbox: BBox, pix_bbox: BBox) -> BBox:
         """
         Convert bounding box pixel coordinates to geo-referenced coordinates.
 
@@ -36,18 +36,16 @@ class DetectionController(object):
         :param px_bbox_list: list, bounding box in pixel coordinates [x1, y1, x2, y2, ...]
         :return: BBox, geo-referenced bounding box
         """
-        # Extract pixel coordinates
-        x1_px, y1_px, x2_px, y2_px = px_bbox_list[:4]
 
         # Compute scaling factors
         x_scale = (ref_bbox.x2 - ref_bbox.x1) / TILE_SIZE
         y_scale = (ref_bbox.y2 - ref_bbox.y1) / TILE_SIZE
 
         # Convert pixel coordinates to geo-referenced coordinates
-        x1_geo = ref_bbox.x1 + x1_px * x_scale
-        y1_geo = ref_bbox.y2 - y1_px * y_scale  # Invert y-axis (top-left origin)
-        x2_geo = ref_bbox.x1 + x2_px * x_scale
-        y2_geo = ref_bbox.y2 - y2_px * y_scale  # Invert y-axis (top-left origin)
+        x1_geo = ref_bbox.x1 + pix_bbox.x1 * x_scale
+        y1_geo = ref_bbox.y2 - pix_bbox.y1 * y_scale  # Invert y-axis (top-left origin)
+        x2_geo = ref_bbox.x1 + pix_bbox.x2 * x_scale
+        y2_geo = ref_bbox.y2 - pix_bbox.y2 * y_scale  # Invert y-axis (top-left origin)
 
         return BBox(x1_geo, y1_geo, x2_geo, y2_geo)
 
@@ -68,10 +66,13 @@ class DetectionController(object):
         # Step 3 - Parse the results
         logs.info("Parsing resulting boxes")
         detections = []
-        for box in inf_res["boxes"]:
-            logs.debug(f"Now parsing result: {box}")
-            geobox = self.__pixel_to_coordinates(ref_bbox, box)
-            confidence = 0
+        for inf in inf_res["inference"]:
+            logs.debug(f"Now parsing result: {inf}")
+            inf_box = BBox(
+                inf["box"]["x1"], inf["box"]["y1"], inf["box"]["x2"], inf["box"]["y2"]
+            )
+            geobox = self.__pixel_to_coordinates(ref_bbox, inf_box)
+            confidence = inf["confidence"]
             DetectionResult(geobox, confidence, image_uri)
 
         return detections
