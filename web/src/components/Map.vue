@@ -20,7 +20,7 @@ const layers: { [key: string]: Layer } = {
   "streets": L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     minZoom: 5,
     maxZoom: 20,
-    opacity: 0.3,
+    opacity: 1,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
   }),
 };
@@ -46,8 +46,12 @@ onMounted(async ()=> {
     map.on('zoom', () => {
       const curZoom = map.getZoom();
       if (selectedRegion.value !== null && curZoom < 8) {
-        enableAllRegions(regionLayers.value as RegionLayer[])
+        // Remove municipalities
+        selectedRegion.value.purgeMunicipalities()
+        // Reset selectedRegion
         selectedRegion.value = null;
+        //Re-enable all regions
+        enableAllRegions(regionLayers.value as RegionLayer[])
       }
     });
 });
@@ -55,7 +59,7 @@ onMounted(async ()=> {
 const loadRegions = async () => {
     // Retrieve regions from api
     const regions = await getAllRegions();
-    const layers =  regions.map(r => new RegionLayer(r));
+    const layers =  regions.map(r => new RegionLayer(r, map));
     // Enable all regions
     enableAllRegions(layers)
     // Add to map
@@ -66,6 +70,9 @@ const loadRegions = async () => {
 const resetMap = () => {
   map.setView([41.9, 12.5], 7);
   enableAllRegions(regionLayers.value as RegionLayer[]);
+  // Remove municipalities
+  selectedRegion.value?.purgeMunicipalities()
+  // Reset selectedRegion
   selectedRegion.value = null;
 }
 
@@ -81,7 +88,7 @@ const regionClickCallback = async (selected: RegionLayer) => {
   console.log({selected});
   // Center Region
   const bounds = selected.layer.getBounds();
-  map.fitBounds(bounds);
+  map.fitBounds(bounds, {animate: true, maxZoom: 10});
 
   // Disable all but region selected
   regionLayers.value
