@@ -34,7 +34,7 @@ export class MunicipalityLayer {
 
   public enable() {
       this.layer
-      .setStyle({color:"#abd327", fillOpacity: 0.2, weight: 2})
+      .setStyle({color:"#9c641a", fillOpacity: 0.2, weight: 2})
       .addEventListener('mouseover', async() => {
         this.layer.setStyle({fillOpacity: 0.9})
       })

@@ -37,7 +37,7 @@ const props = defineProps<{ visible: boolean }>();
   width: 30vw;
   min-height: 30vh;
   max-height: 80vh;
-  background: lightgray;
+  background-color: #fAfAfA ;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
   border-radius: 10px;
   display: flex;

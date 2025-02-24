@@ -3,6 +3,7 @@ import L, { Layer, Map } from 'leaflet';
 import { computed, onMounted, ref } from 'vue';
 import { getAllRegions } from '../api/geo';
 import Dialog from './core/Dialog.vue';
+import { MunicipalityLayer } from './municipalities/MunicipalityLayer';
 import RegionDialog from './regions/RegionDialog.vue';
 import { RegionLayer } from './regions/RegionLayer';
 
@@ -32,8 +33,73 @@ const layers: { [key: string]: Layer } = {
 const isMapLoading = ref<boolean>(false);
 const isDialogOpen = computed(() => selectedRegion.value !== null);
 const regionLayers = ref<Array<RegionLayer>>([]);
-const selectedRegion = ref<RegionLayer | null>(null);
 
+const selectedRegion = ref<RegionLayer | null>(null);
+const selectedMunicipality = ref<MunicipalityLayer | null>(null);
+
+
+const loadRegions = async () => {
+    // Retrieve regions from api
+    const regions = await getAllRegions();
+    const layers =  regions.map(r => {
+      const regionLayer = new RegionLayer(r, map)
+      regionLayer.regionSelectController = regionSelectController;
+      regionLayer.municipalitySelectController = municipalitySelectController;
+      return regionLayer;
+    });
+    // Enable all regions
+    enableAllRegions(layers)
+    // Add to map
+    layers.forEach(r => map.addLayer(r.layer));
+    return layers
+}
+
+const resetMap = () => {
+  map.setView([41.9, 12.5], 7);
+  enableAllRegions(regionLayers.value as RegionLayer[]);
+  // Remove municipalities
+  selectedRegion.value?.purgeMunicipalities()
+  // Reset selectedRegion
+  selectedRegion.value = null;
+  selectedMunicipality.value = null;
+}
+
+const enableAllRegions = async (regions: Array<RegionLayer>) => {
+    console.log("Enabling all regions")
+    regions.forEach(r => r.enable());
+}
+
+/**
+ * Manages click on region
+ */
+const regionSelectController = async (selected: RegionLayer) => {
+  console.log({selected});
+  // Center Region
+  const bounds = selected.layer.getBounds();
+  map.fitBounds(bounds, {animate: true, maxZoom: 10});
+
+  // Disable all but region selected
+  regionLayers.value
+    .filter(r => r.id !== selected.id)
+    .forEach(r => r.disable())
+
+  // Set selected region
+  selectedRegion.value = selected;
+}
+
+/**
+ * Manages click on municipality
+ */
+const municipalitySelectController = async (selected: MunicipalityLayer) => {
+  console.log({selected});
+
+  // Set selected region
+  selectedMunicipality.value = selected;
+}
+
+/*
+ * - HOOKS 
+ */
 onMounted(async ()=> {
     map = L.map('map').setView([41.9, 12.5], 7);
     map.zoomControl.remove()
@@ -51,54 +117,12 @@ onMounted(async ()=> {
         selectedRegion.value.purgeMunicipalities()
         // Reset selectedRegion
         selectedRegion.value = null;
+        selectedMunicipality.value = null;
         //Re-enable all regions
         enableAllRegions(regionLayers.value as RegionLayer[])
       }
     });
 });
-
-const loadRegions = async () => {
-    // Retrieve regions from api
-    const regions = await getAllRegions();
-    const layers =  regions.map(r => new RegionLayer(r, map));
-    // Enable all regions
-    enableAllRegions(layers)
-    // Add to map
-    layers.forEach(r => map.addLayer(r.layer));
-    return layers
-}
-
-const resetMap = () => {
-  map.setView([41.9, 12.5], 7);
-  enableAllRegions(regionLayers.value as RegionLayer[]);
-  // Remove municipalities
-  selectedRegion.value?.purgeMunicipalities()
-  // Reset selectedRegion
-  selectedRegion.value = null;
-}
-
-const enableAllRegions = async (regions: Array<RegionLayer>) => {
-    console.log("Enabling all regions")
-    regions.forEach(r => r.enable(regionClickCallback));
-}
-
-/**
- * Manages click on feature impact on the whole map
- */
-const regionClickCallback = async (selected: RegionLayer) => {
-  console.log({selected});
-  // Center Region
-  const bounds = selected.layer.getBounds();
-  map.fitBounds(bounds, {animate: true, maxZoom: 10});
-
-  // Disable all but region selected
-  regionLayers.value
-    .filter(r => r.id !== selected.id)
-    .forEach(r => r.disable())
-
-  // Set selected region
-  selectedRegion.value = selected;
-}
 
 </script>
 
@@ -108,12 +132,17 @@ const regionClickCallback = async (selected: RegionLayer) => {
       <!-- NAVIGATION BREADCRUMB -->
       <q-breadcrumbs active-color="primary">
         <q-breadcrumbs-el 
-        label="Map" icon="map"
-        @click="() => resetMap()"
-        class="pointer"
+          label="Map" icon="map"
+          @click="() => resetMap()"
+          class="pointer"
         />
         <q-breadcrumbs-el 
-        :label="selectedRegion?.name"
+          :label="selectedRegion?.name"
+          @click="() => selectedRegion?.select()"
+        />
+        <q-breadcrumbs-el 
+          v-if="selectedMunicipality !== null"
+          :label="selectedMunicipality?.name"
         />
       </q-breadcrumbs>
       <!-- BODY -->
