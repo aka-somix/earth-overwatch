@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import L, { Layer, Map } from 'leaflet';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { getAllRegions } from '../api/geo';
 import Dialog from './core/Dialog.vue';
 import { RegionLayer } from './regions/RegionLayer';
@@ -29,12 +29,12 @@ const layers: { [key: string]: Layer } = {
  * REFS
  */
 const isMapLoading = ref<boolean>(false);
-const isDialogOpen = ref<boolean>(false);
+const isDialogOpen = computed(() => selectedRegion.value !== null);
 const regionLayers = ref<Array<RegionLayer>>([]);
 const selectedRegion = ref<RegionLayer | null>(null);
 
 onMounted(async ()=> {
-    map = L.map('map').setView([39.363849580093145, 16.226570855657855], 9);
+    map = L.map('map').setView([41.9, 12.5], 7);
     map.zoomControl.remove()
     map.addControl(L.control.zoom({position: 'bottomright'}));
     map.addLayer(layers['satellite']).addLayer(layers['streets']);
@@ -47,6 +47,7 @@ onMounted(async ()=> {
       const curZoom = map.getZoom();
       if (selectedRegion.value !== null && curZoom < 8) {
         enableAllRegions(regionLayers.value as RegionLayer[])
+        selectedRegion.value = null;
       }
     });
 });
@@ -62,10 +63,15 @@ const loadRegions = async () => {
     return layers
 }
 
+const resetMap = () => {
+  map.setView([41.9, 12.5], 7);
+  enableAllRegions(regionLayers.value as RegionLayer[]);
+  selectedRegion.value = null;
+}
+
 const enableAllRegions = async (regions: Array<RegionLayer>) => {
     console.log("Enabling all regions")
     regions.forEach(r => r.enable(regionClickCallback));
-    isDialogOpen.value = false;
 }
 
 /**
@@ -84,7 +90,6 @@ const regionClickCallback = async (selected: RegionLayer) => {
 
   // Set selected region
   selectedRegion.value = selected;
-  isDialogOpen.value = true;
 }
 
 </script>
@@ -92,8 +97,22 @@ const regionClickCallback = async (selected: RegionLayer) => {
 <template>
   <div class="container">
     <Dialog :visible="isDialogOpen">
-      <h3>Example Dialog</h3>
-      <p>Lorem ipsum bla bla bla</p>
+      <!-- NAVIGATION BREADCRUMB -->
+      <q-breadcrumbs active-color="primary">
+        <q-breadcrumbs-el 
+        label="Map" icon="map"
+        @click="() => resetMap()"
+        class="pointer"
+        />
+        <q-breadcrumbs-el 
+        :label="selectedRegion?.name" icon="layers"
+        />
+      </q-breadcrumbs>
+      <!-- BODY -->
+      <div class="dialogbody">
+        <p>Clicca su un municipio per visualizzare le <b>zone d'interesse</b> e gestire i <b>monitoraggi</b>.</p>
+        <p>Per uscire, clicca sull'icona Map.</p>
+      </div>
     </Dialog>
     <div class="loader" v-show="isMapLoading">
       <p>🌍 Your map is loading</p>
@@ -132,4 +151,21 @@ const regionClickCallback = async (selected: RegionLayer) => {
     50% { opacity: 1; }
     100% { opacity: 0; }
 }
+
+.q-breadcrumbs{
+  font-size: 2.2rem;
+}
+
+.q-breadcrumbs:hover{
+  cursor: pointer;
+}
+
+.dialogbody {
+  margin-top: 2rem;
+  margin-left: 1rem;
+}
+.dialogbody > p {
+  font-size: 1.3rem;
+}
+
 </style>

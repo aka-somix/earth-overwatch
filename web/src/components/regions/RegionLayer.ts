@@ -12,6 +12,21 @@ export class RegionLayer {
     this.layer = L.geoJSON(region.boundaries)
   }
 
+  public async flyTo(next: (r: RegionLayer)=>Promise<void>) {
+    // TODO Load Municipalities
+
+    // Remove layer
+    this.disable();
+    this.layer.setStyle({
+      color:"#00c3f9",
+      fillOpacity: 0,
+      weight: 4
+    })
+    
+    // Callback
+    next(this);
+  }
+
   public enable(next: (r: RegionLayer)=>Promise<void>) {
       this.layer
       .setStyle({color: '#3fd4ac', fillOpacity: 0.2, weight: 2})
@@ -21,20 +36,7 @@ export class RegionLayer {
       .addEventListener('mouseout', async() => {
         this.layer.setStyle({fillOpacity: 0.2})
       })
-      .addEventListener('click', async() => {
-        // Load Municipalities
-        
-        // Remove layer
-        this.disable();
-        this.layer.setStyle({
-          color:"#00c3f9",
-          fillOpacity: 0,
-          weight: 4
-        })
-        
-        // Callbakc
-        next(this);
-      })
+      .addEventListener('click', async() => this.flyTo(next))
   }
 
   public disable() {

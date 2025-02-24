@@ -35,13 +35,14 @@ const props = defineProps<{ visible: boolean }>();
 
 .dialog-card {
   width: 30vw;
-  height: 80vh;
+  min-height: 30vh;
+  max-height: 80vh;
   background: lightgray;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
   border-radius: 10px;
   display: flex;
   flex-direction: column;
-  padding: 1rem;
+  padding: 2rem;
   pointer-events: auto;
   opacity: 0;
   transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
@@ -61,7 +62,8 @@ const props = defineProps<{ visible: boolean }>();
   }
   .dialog-card {
     width: 90vw;
-    height: 40vh;
+    min-height: 10vh;
+    max-height: 40vh;
   }
 }
 </style>
