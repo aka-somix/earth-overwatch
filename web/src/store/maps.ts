@@ -1,3 +1,16 @@
+/**
+ * !
+ * !
+ * !
+ * !
+ * !
+ * TODO DEPRECATE THIS
+ * !
+ * !
+ * !
+ * !
+ * 
+ */
 import L, { Layer, Map } from 'leaflet';
 import { defineStore } from 'pinia';
 
