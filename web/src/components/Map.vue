@@ -2,6 +2,7 @@
 import L, { Layer, Map } from 'leaflet';
 import { onMounted, ref } from 'vue';
 import { getAllRegions } from '../api/geo';
+import Dialog from './core/Dialog.vue';
 import { RegionLayer } from './regions/RegionLayer';
 
 /*
@@ -28,6 +29,7 @@ const layers: { [key: string]: Layer } = {
  * REFS
  */
 const isMapLoading = ref<boolean>(false);
+const isDialogOpen = ref<boolean>(false);
 const regionLayers = ref<Array<RegionLayer>>([]);
 const selectedRegion = ref<RegionLayer | null>(null);
 
@@ -63,6 +65,7 @@ const loadRegions = async () => {
 const enableAllRegions = async (regions: Array<RegionLayer>) => {
     console.log("Enabling all regions")
     regions.forEach(r => r.enable(regionClickCallback));
+    isDialogOpen.value = false;
 }
 
 /**
@@ -81,12 +84,17 @@ const regionClickCallback = async (selected: RegionLayer) => {
 
   // Set selected region
   selectedRegion.value = selected;
+  isDialogOpen.value = true;
 }
 
 </script>
 
 <template>
   <div class="container">
+    <Dialog :visible="isDialogOpen">
+      <h3>Example Dialog</h3>
+      <p>Lorem ipsum bla bla bla</p>
+    </Dialog>
     <div class="loader" v-show="isMapLoading">
       <p>🌍 Your map is loading</p>
     </div>
