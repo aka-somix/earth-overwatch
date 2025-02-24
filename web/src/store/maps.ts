@@ -37,7 +37,7 @@ export const mapsStore = defineStore('map', () => {
     // Loop through the regions and add each one as a GeoJSON layer
     regions.forEach(region => {
       // Parse the boundaries string into an actual GeoJSON object
-      const geoJsonBoundary: GeoJsonObject = JSON.parse(region.boundaries);
+      const geoJsonBoundary: GeoJsonObject = region.boundaries;
 
       // Create a Leaflet GeoJSON layer and add it to the map
       const regionLayer = L.geoJSON(geoJsonBoundary, {
@@ -62,7 +62,8 @@ export const mapsStore = defineStore('map', () => {
         const municipalities = await getMunicipalitiesByRegion(region.id)
         regionLayer.setStyle({opacity: 0.1})
         municipalities.forEach(m => {
-          const mBoundaries: GeoJsonObject = JSON.parse(m.boundaries);
+          console.log(m.boundaries)
+          const mBoundaries: GeoJsonObject = m.boundaries;
           const mLayer = L.geoJSON(mBoundaries, {
             style: {
               color: '#0078AD',

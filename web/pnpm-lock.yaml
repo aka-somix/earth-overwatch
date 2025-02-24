@@ -17,6 +17,9 @@ importers:
       '@types/node':
         specifier: ^22.10.5
         version: 22.10.5
+      '@vue-leaflet/vue-leaflet':
+        specifier: ^0.10.1
+        version: 0.10.1(@types/leaflet@1.9.15)(leaflet@1.9.4)(typescript@5.7.2)
       axios:
         specifier: ^1.7.9
         version: 1.7.9
@@ -437,6 +440,15 @@ packages:
 
   '@volar/typescript@2.4.11':
     resolution: {integrity: sha512-2DT+Tdh88Spp5PyPbqhyoYavYCPDsqbHLFwcUI9K1NlY1YgUJvujGdrqUp0zWxnW7KWNTr3xSpMuv2WnaTKDAw==}
+
+  '@vue-leaflet/vue-leaflet@0.10.1':
+    resolution: {integrity: sha512-RNEDk8TbnwrJl8ujdbKgZRFygLCxd0aBcWLQ05q/pGv4+d0jamE3KXQgQBqGAteE1mbQsk3xoNcqqUgaIGfWVg==}
+    peerDependencies:
+      '@types/leaflet': ^1.5.7
+      leaflet: ^1.6.0
+    peerDependenciesMeta:
+      '@types/leaflet':
+        optional: true
 
   '@vue/compiler-core@3.5.13':
     resolution: {integrity: sha512-oOdAkwqUfW1WqpwSYJce06wvt6HljgY3fGeM9NcVA1HaYOij3mZG9Rkysn0OHuyUAGMbEbARIpsG+LPVlBJ5/Q==}
@@ -978,6 +990,15 @@ snapshots:
       '@volar/language-core': 2.4.11
       path-browserify: 1.0.1
       vscode-uri: 3.0.8
+
+  '@vue-leaflet/vue-leaflet@0.10.1(@types/leaflet@1.9.15)(leaflet@1.9.4)(typescript@5.7.2)':
+    dependencies:
+      leaflet: 1.9.4
+      vue: 3.5.13(typescript@5.7.2)
+    optionalDependencies:
+      '@types/leaflet': 1.9.15
+    transitivePeerDependencies:
+      - typescript
 
   '@vue/compiler-core@3.5.13':
     dependencies:

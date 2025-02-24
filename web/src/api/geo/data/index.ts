@@ -1,6 +1,7 @@
 // src/services/apiService.ts
 
 import { AxiosError } from 'axios';
+import { GeoJsonObject } from 'geojson';
 import { apiClient } from '../client';
 
 /**
@@ -10,13 +11,13 @@ export interface Municipality {
   id: number;
   name: string;
   region: string;
-  boundaries: string; // Assuming boundaries are complex GeoJSON-like objects, adjust type if necessary
+  boundaries: GeoJsonObject
 }
 
 export interface Region {
   id: number;
   name: string;
-  boundaries: string; // Assuming boundaries are complex GeoJSON-like objects, adjust type if necessary
+  boundaries: GeoJsonObject
 }
 
 /**
