@@ -3,6 +3,7 @@ import L, { Layer, Map } from 'leaflet';
 import { computed, onMounted, ref } from 'vue';
 import { getAllRegions } from '../api/geo';
 import Dialog from './core/Dialog.vue';
+import RegionDialog from './regions/RegionDialog.vue';
 import { RegionLayer } from './regions/RegionLayer';
 
 /*
@@ -112,14 +113,11 @@ const regionClickCallback = async (selected: RegionLayer) => {
         class="pointer"
         />
         <q-breadcrumbs-el 
-        :label="selectedRegion?.name" icon="layers"
+        :label="selectedRegion?.name"
         />
       </q-breadcrumbs>
       <!-- BODY -->
-      <div class="dialogbody">
-        <p>Clicca su un municipio per visualizzare le <b>zone d'interesse</b> e gestire i <b>monitoraggi</b>.</p>
-        <p>Per uscire, clicca sull'icona Map.</p>
-      </div>
+      <RegionDialog/>
     </Dialog>
     <div class="loader" v-show="isMapLoading">
       <p>🌍 Your map is loading</p>
@@ -165,14 +163,6 @@ const regionClickCallback = async (selected: RegionLayer) => {
 
 .q-breadcrumbs:hover{
   cursor: pointer;
-}
-
-.dialogbody {
-  margin-top: 2rem;
-  margin-left: 1rem;
-}
-.dialogbody > p {
-  font-size: 1.3rem;
 }
 
 </style>
