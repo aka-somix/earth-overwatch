@@ -44,6 +44,69 @@ resource "aws_api_gateway_integration" "this" {
 }
 
 #
+# -- OPTIONS METHOD (Required for CORS)
+#
+resource "aws_api_gateway_method" "root_options" {
+  rest_api_id   = var.apigw_rest_api.id
+  resource_id   = aws_api_gateway_resource.this.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_method_response" "root_options_200" {
+  rest_api_id = var.apigw_rest_api.id
+  resource_id = aws_api_gateway_resource.this.id
+  http_method = aws_api_gateway_method.root_options.http_method
+  status_code = 200
+
+  response_models = {
+    "application/json" = "Empty"
+  }
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"      = true
+    "method.response.header.Access-Control-Allow-Headers"     = true
+    "method.response.header.Access-Control-Allow-Methods"     = true
+    "method.response.header.Access-Control-Allow-Credentials" = true
+  }
+
+  depends_on = [aws_api_gateway_method.root_options]
+}
+
+resource "aws_api_gateway_integration" "root_options" {
+  rest_api_id = var.apigw_rest_api.id
+  resource_id = aws_api_gateway_resource.this.id
+  http_method = aws_api_gateway_method.root_options.http_method
+  type        = "MOCK"
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_integration_response" "root_options_integration_response" {
+  rest_api_id = var.apigw_rest_api.id
+  resource_id = aws_api_gateway_resource.this.id
+  http_method = aws_api_gateway_method.root_options.http_method
+  status_code = 200
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'"
+    "method.response.header.Access-Control-Allow-Methods" = "'OPTIONS,DELETE,GET,HEAD,PATCH,POST,PUT'"
+  }
+
+  response_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+
+  depends_on = [
+    aws_api_gateway_method_response.root_options_200,
+    aws_api_gateway_integration.root_options,
+  ]
+}
+
+
+#
 # -- PROXY RESOURCE --
 # Proxies everything after /data-service/* to the lambda function
 
