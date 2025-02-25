@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen:landfills": "openapi --input ./src/api/_openapi/landfills.openapi.yaml -o ./src/api/generated/ -c axios --name Landfills"
   },
   "dependencies": {
     "@quasar/extras": "^1.16.15",
@@ -24,6 +25,8 @@
     "@types/geojson": "^7946.0.15",
     "@types/leaflet": "^1.9.15",
     "@vitejs/plugin-vue": "^5.2.1",
+    "form-data": "^4.0.2",
+    "openapi-typescript-codegen": "^0.29.0",
     "sass": "^1.83.1",
     "typescript": "^5.7.2",
     "vite": "^5.4.11",
