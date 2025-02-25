@@ -156,7 +156,7 @@ onMounted(async ()=> {
       </q-breadcrumbs>
       <!-- BODY -->
       <RegionDialog v-if="dialogScope === 'REGION'" />
-      <MunicipalityDialog v-if="dialogScope === 'MUNICIPALITY'"/>
+      <MunicipalityDialog v-if="dialogScope === 'MUNICIPALITY'" :key="selectedMunicipality?.id"/>
     </Dialog>
     <div class="loader" v-show="isMapLoading">
       <p>🌍 Your map is loading</p>

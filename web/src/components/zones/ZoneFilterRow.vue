@@ -58,7 +58,7 @@ const props = defineProps<{ title: string; enabled?: boolean }>();
   cursor: pointer;
 }
 .row > .color:hover {
-  border: 2px solid #008dc9 inset;
+  box-shadow: inset 0 0 0 100vmax rgba(0, 0, 0, 0.2);
 }
 
 .picker {
