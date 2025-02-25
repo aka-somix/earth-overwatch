@@ -1,0 +1,1 @@
+export type SELECTION_SCOPE = 'REGION' | 'MUNICIPALITY' | 'ZONE' | 'NONE';

@@ -2,7 +2,9 @@
 import L, { Layer, Map } from 'leaflet';
 import { computed, onMounted, ref } from 'vue';
 import { getAllRegions } from '../api/geo';
+import { SELECTION_SCOPE } from './@types';
 import Dialog from './core/Dialog.vue';
+import MunicipalityDialog from './municipalities/MunicipalityDialog.vue';
 import { MunicipalityLayer } from './municipalities/MunicipalityLayer';
 import RegionDialog from './regions/RegionDialog.vue';
 import { RegionLayer } from './regions/RegionLayer';
@@ -31,12 +33,18 @@ const layers: { [key: string]: Layer } = {
  * REFS
  */
 const isMapLoading = ref<boolean>(false);
-const isDialogOpen = computed(() => selectedRegion.value !== null);
 const regionLayers = ref<Array<RegionLayer>>([]);
-
-const selectedRegion = ref<RegionLayer | null>(null);
-const selectedMunicipality = ref<MunicipalityLayer | null>(null);
-
+  
+  const selectedRegion = ref<RegionLayer | null>(null);
+  const selectedMunicipality = ref<MunicipalityLayer | null>(null);
+  
+  const isDialogOpen = computed(() => selectedRegion.value !== null);
+  const dialogScope = computed((): SELECTION_SCOPE => {
+    console.log({selectedMunicipality})
+    if (selectedRegion.value !== null && selectedMunicipality.value !== null) return "MUNICIPALITY";
+    else if (selectedRegion.value !== null) return "REGION";
+    else return 'NONE';
+  }) 
 
 const loadRegions = async () => {
     // Retrieve regions from api
@@ -85,6 +93,7 @@ const regionSelectController = async (selected: RegionLayer) => {
 
   // Set selected region
   selectedRegion.value = selected;
+  selectedMunicipality.value = null;
 }
 
 /**
@@ -146,7 +155,8 @@ onMounted(async ()=> {
         />
       </q-breadcrumbs>
       <!-- BODY -->
-      <RegionDialog/>
+      <RegionDialog v-if="dialogScope === 'REGION'" />
+      <MunicipalityDialog v-if="dialogScope === 'MUNICIPALITY'"/>
     </Dialog>
     <div class="loader" v-show="isMapLoading">
       <p>🌍 Your map is loading</p>
@@ -187,7 +197,7 @@ onMounted(async ()=> {
 }
 
 .q-breadcrumbs{
-  font-size: 2.2rem;
+  font-size: 2rem;
 }
 
 .q-breadcrumbs:hover{

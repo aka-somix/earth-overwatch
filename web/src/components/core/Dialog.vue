@@ -53,7 +53,7 @@ const props = defineProps<{ visible: boolean }>();
   transform: translateY(0);
 }
 
-@media screen and (max-width: 1028px) {
+@media screen and (max-width: 1600px) {
   .dialog-overlay {
     justify-content: center;
     align-items: flex-end;
