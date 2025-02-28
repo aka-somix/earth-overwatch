@@ -30,7 +30,7 @@ const others = [{ icon: 'info', text: 'About this Project', route: '/about' }];
     />
 
     <!-- LEFT DRAWER -->
-    <q-drawer v-model="isMenuDrawerOpen" side="left" bordered :width="300">
+    <q-drawer v-model="isMenuDrawerOpen" side="left" bordered overlay :width="300">
       <q-scroll-area class="fit">
         <q-list padding class="text-grey-8">
           <q-item

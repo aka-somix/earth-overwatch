@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import L, { Layer, Map } from 'leaflet';
 import { computed, onMounted, ref } from 'vue';
+import { landfillService } from '../api';
 import { getAllRegions } from '../api/geo';
 import { SELECTION_SCOPE } from './@types';
 import Dialog from './core/Dialog.vue';
@@ -8,6 +9,7 @@ import MunicipalityDialog from './municipalities/MunicipalityDialog.vue';
 import { MunicipalityLayer } from './municipalities/MunicipalityLayer';
 import RegionDialog from './regions/RegionDialog.vue';
 import { RegionLayer } from './regions/RegionLayer';
+import { ZoneLayer } from './zones/ZoneLayer';
 
 /*
  * CONSTANTS 
@@ -24,7 +26,7 @@ const layers: { [key: string]: Layer } = {
   "streets": L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     minZoom: 5,
     maxZoom: 20,
-    opacity: 1,
+    opacity: 0.8,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
   }),
 };
@@ -35,16 +37,16 @@ const layers: { [key: string]: Layer } = {
 const isMapLoading = ref<boolean>(false);
 const regionLayers = ref<Array<RegionLayer>>([]);
   
-  const selectedRegion = ref<RegionLayer | null>(null);
-  const selectedMunicipality = ref<MunicipalityLayer | null>(null);
-  
-  const isDialogOpen = computed(() => selectedRegion.value !== null);
-  const dialogScope = computed((): SELECTION_SCOPE => {
-    console.log({selectedMunicipality})
-    if (selectedRegion.value !== null && selectedMunicipality.value !== null) return "MUNICIPALITY";
-    else if (selectedRegion.value !== null) return "REGION";
-    else return 'NONE';
-  }) 
+const selectedRegion = ref<RegionLayer | null>(null);
+const selectedMunicipality = ref<MunicipalityLayer | null>(null);
+
+const isDialogOpen = computed(() => selectedRegion.value !== null);
+const dialogScope = computed((): SELECTION_SCOPE => {
+  console.log({selectedMunicipality})
+  if (selectedRegion.value !== null && selectedMunicipality.value !== null) return "MUNICIPALITY";
+  else if (selectedRegion.value !== null) return "REGION";
+  else return 'NONE';
+}) 
 
 const loadRegions = async () => {
     // Retrieve regions from api
@@ -95,6 +97,31 @@ const regionSelectController = async (selected: RegionLayer) => {
   selectedRegion.value = selected;
   selectedMunicipality.value = null;
 }
+
+//
+// ZONES MANAGEMENT METHODS
+//
+const showZones = async (municipality: MunicipalityLayer) => {
+    console.log(`Showing zones in municipality ${municipality.name}`);
+
+    isMapLoading.value = true;
+    
+    const landfills = await landfillService.landfills.getDetections(parseInt(municipality.id));
+    municipality.landfills = landfills.map((l) => new ZoneLayer(l, municipality, "red"));
+    municipality.landfills.forEach((l) => map.addLayer(l.layer))
+    
+    isMapLoading.value = false;
+}
+
+const hideZones = async (municipality: MunicipalityLayer) => {
+    console.log(`Hiding zones in municipality ${municipality.name}`);
+    isMapLoading.value = true;
+
+    municipality.landfills.forEach((l) => map.removeLayer(l.layer))
+
+    isMapLoading.value = false;
+}
+
 
 /**
  * Manages click on municipality
@@ -156,7 +183,13 @@ onMounted(async ()=> {
       </q-breadcrumbs>
       <!-- BODY -->
       <RegionDialog v-if="dialogScope === 'REGION'" />
-      <MunicipalityDialog v-if="dialogScope === 'MUNICIPALITY'" :key="selectedMunicipality?.id"/>
+      <MunicipalityDialog 
+        v-if="dialogScope === 'MUNICIPALITY'" 
+        :key="selectedMunicipality?.id"
+        :municipality="selectedMunicipality as MunicipalityLayer"
+        @show-zones="showZones"
+        @hide-zones="hideZones"
+      />
     </Dialog>
     <div class="loader" v-show="isMapLoading">
       <p>🌍 Your map is loading</p>
@@ -203,5 +236,4 @@ onMounted(async ()=> {
 .q-breadcrumbs:hover{
   cursor: pointer;
 }
-
 </style>

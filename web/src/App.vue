@@ -16,4 +16,9 @@
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.5) transparent;
   }
+
+.leaflet-interactive:focus {
+    outline: none; /* Remove the default focus outline */
+}
+
 </style>

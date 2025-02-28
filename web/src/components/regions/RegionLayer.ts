@@ -43,6 +43,7 @@ export class RegionLayer {
         fillOpacity: 0,
         weight: 4
       })
+      .unbindTooltip()
       .removeEventListener('mouseover')
       .removeEventListener('mouseout')
       .removeEventListener('click')
@@ -54,6 +55,14 @@ export class RegionLayer {
   public enable() {
       this.layer
       .setStyle({color:"#116952", fillOpacity: 0.2, weight: 2})
+      .bindTooltip(
+        this.name,
+        {
+          direction: "top",
+          opacity: 0.8,
+          permanent: false,
+        }
+      )
       .addEventListener('mouseover', async() => {
         this.layer.setStyle({fillOpacity: 0.9})
       })
@@ -69,6 +78,7 @@ export class RegionLayer {
       .removeEventListener('mouseover')
       .removeEventListener('mouseout')
       .removeEventListener('click')
+      .unbindTooltip()
     this.purgeMunicipalities()
   }
 

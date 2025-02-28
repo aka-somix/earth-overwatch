@@ -1,14 +1,36 @@
 <script setup lang="ts">
+import { defineEmits, defineProps } from "vue";
 import ZoneFilterRow from "../zones/ZoneFilterRow.vue";
+import { MunicipalityLayer } from "./MunicipalityLayer";
+
+// PROPS
+const {municipality} = defineProps<{ municipality: MunicipalityLayer }>();
+
+// EMITS
+const emit = defineEmits<{
+  (e: 'showZones', municipality: MunicipalityLayer): void,
+  (e: 'hideZones', municipality: MunicipalityLayer): void,
+}>();
+
+// FUNCTIONS
+const toggleZones = (onoff: boolean) => {
+  if (onoff) emit('showZones', municipality);
+  else emit('hideZones', municipality);
+}
+
 </script>
 
 <template>
   <div class="dialogbody">
     <div class="section visual">
       <div class="title text-primary">Visualizzazione</div>
-      <ZoneFilterRow title="Discariche Abusive" enabled class="row" />
-      <ZoneFilterRow title="Incendi" class="row" />
-      <ZoneFilterRow title="Zone a rischio frana" class="row" />
+      <ZoneFilterRow 
+        class="row" 
+        enabled 
+        title="Discariche Abusive"
+        @show-zones="() => {toggleZones(true)}"
+        @hide-zones="() => {toggleZones(false)}"
+      />
     </div>
     <div class="section monitors">
       <div class="title text-primary">Monitoraggi</div>

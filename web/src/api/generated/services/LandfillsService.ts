@@ -2,11 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { BaseHttpRequest } from '../core/BaseHttpRequest';
+import type { CancelablePromise } from '../core/CancelablePromise';
 import type { DetectionValidity } from '../models/DetectionValidity';
 import type { Landfill } from '../models/Landfill';
 import type { NewLandfillRequest } from '../models/NewLandfillRequest';
-import type { CancelablePromise } from '../core/CancelablePromise';
-import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 export class LandfillsService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
     /**
