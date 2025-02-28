@@ -83,10 +83,16 @@ def lambda_handler(event, _context):
                 },
             }
             entries.append(entry)
-            logging.info(f"Added entry: {entry}")
+            logging.info(f"Added entry: {entry['Id']}")
 
     else:
         logging.warning('No Contents found in response')
+
+    logging.info(f"Number of entries: {len(entries)}")
+
+    if len(entries) > 500:
+        logging.warning(f"Too many entries: {len(entries)}. Cutting down to 1000")
+        entries = entries[:500]
 
     logging.info(f"Final entries: {entries}")
     return {"Entries": entries}
