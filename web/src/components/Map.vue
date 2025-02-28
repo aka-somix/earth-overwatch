@@ -69,13 +69,15 @@ const loadRegions = async () => {
 const resetMap = () => {
   map.setView([41.9, 12.5], 7);
   enableAllRegions(regionLayers.value as RegionLayer[]);
-  // Remove Zones
-  selectedMunicipality.value?.hideZones(map)
-  // Remove municipalities
-  selectedRegion.value?.purgeMunicipalities()
+
   // Reset selectedRegion
+  selectedRegion.value?.purgeMunicipalities();
   selectedRegion.value = null;
+  // Reset selectedMunicipality
+  selectedMunicipality.value?.hideZones(map);
+  // Reset selectedZone
   selectedMunicipality.value = null;
+  selectedZone.value = null;
 }
 
 const enableAllRegions = async (regions: Array<RegionLayer>) => {
@@ -101,6 +103,7 @@ const regionSelectController = async (selected: RegionLayer) => {
   selectedRegion.value = selected;
   selectedMunicipality.value?.hideZones(map);
   selectedMunicipality.value = null;
+  selectedZone.value = null;
 }
 
 //
