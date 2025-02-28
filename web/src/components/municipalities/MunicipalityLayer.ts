@@ -1,4 +1,4 @@
-import L from "leaflet";
+import L, { Map } from "leaflet";
 import { Municipality } from "../../api/geo";
 import { RegionLayer } from "../regions/RegionLayer";
 import { ZoneLayer } from "../zones/ZoneLayer";
@@ -23,7 +23,6 @@ export class MunicipalityLayer {
   public async flyTo() {
     // Disable other municipalities
     this.parent.selectMunicipality(this);
-
     // Remove layer
     this.layer
       .setStyle({
@@ -39,12 +38,12 @@ export class MunicipalityLayer {
 
   public enable() {
       this.layer
-      .setStyle({color:"#9c641a", fillOpacity: 0.2, weight: 2})
+      .setStyle({color:"#9c641a", fillOpacity: 0.1, weight: 2})
       .addEventListener('mouseover', async() => {
         this.layer.setStyle({fillOpacity: 0.9})
       })
       .addEventListener('mouseout', async() => {
-        this.layer.setStyle({fillOpacity: 0.2})
+        this.layer.setStyle({fillOpacity: 0.1})
       })
       .addEventListener('click', async() => this.flyTo())
       .bindTooltip(
@@ -59,9 +58,13 @@ export class MunicipalityLayer {
 
   public disable() {
     this.layer      
-      .setStyle({color:"#404040", fillOpacity: 0.6, weight: 2})
+      .setStyle({color:"#808080", fillOpacity: 0.6, weight: 2})
       .addEventListener('mouseout', async() => {
         this.layer.setStyle({fillOpacity: 0.6})
       })
+  }
+
+  public hideZones(map: Map) {
+    this.landfills.forEach((l) => map.removeLayer(l.layer))
   }
 }

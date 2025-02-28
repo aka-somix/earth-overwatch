@@ -9,6 +9,7 @@ import MunicipalityDialog from './municipalities/MunicipalityDialog.vue';
 import { MunicipalityLayer } from './municipalities/MunicipalityLayer';
 import RegionDialog from './regions/RegionDialog.vue';
 import { RegionLayer } from './regions/RegionLayer';
+import ZoneDialog from './zones/ZoneDialog.vue';
 import { ZoneLayer } from './zones/ZoneLayer';
 
 /*
@@ -39,10 +40,11 @@ const regionLayers = ref<Array<RegionLayer>>([]);
   
 const selectedRegion = ref<RegionLayer | null>(null);
 const selectedMunicipality = ref<MunicipalityLayer | null>(null);
+const selectedZone = ref<ZoneLayer | null>(null);
 
 const isDialogOpen = computed(() => selectedRegion.value !== null);
 const dialogScope = computed((): SELECTION_SCOPE => {
-  console.log({selectedMunicipality})
+  if (selectedRegion.value !== null && selectedMunicipality.value !== null && selectedZone.value !== null) return "ZONE";
   if (selectedRegion.value !== null && selectedMunicipality.value !== null) return "MUNICIPALITY";
   else if (selectedRegion.value !== null) return "REGION";
   else return 'NONE';
@@ -67,6 +69,8 @@ const loadRegions = async () => {
 const resetMap = () => {
   map.setView([41.9, 12.5], 7);
   enableAllRegions(regionLayers.value as RegionLayer[]);
+  // Remove Zones
+  selectedMunicipality.value?.hideZones(map)
   // Remove municipalities
   selectedRegion.value?.purgeMunicipalities()
   // Reset selectedRegion
@@ -95,6 +99,7 @@ const regionSelectController = async (selected: RegionLayer) => {
 
   // Set selected region
   selectedRegion.value = selected;
+  selectedMunicipality.value?.hideZones(map);
   selectedMunicipality.value = null;
 }
 
@@ -107,7 +112,12 @@ const showZones = async (municipality: MunicipalityLayer) => {
     isMapLoading.value = true;
     
     const landfills = await landfillService.landfills.getDetections(parseInt(municipality.id));
-    municipality.landfills = landfills.map((l) => new ZoneLayer(l, municipality, "red"));
+    municipality.landfills = landfills
+      .map((l) => {
+        const zone = new ZoneLayer(l, municipality, "#008dc9")
+        zone.selectController = zonesSelectController
+        return zone;
+      })
     municipality.landfills.forEach((l) => map.addLayer(l.layer))
     
     isMapLoading.value = false;
@@ -117,7 +127,8 @@ const hideZones = async (municipality: MunicipalityLayer) => {
     console.log(`Hiding zones in municipality ${municipality.name}`);
     isMapLoading.value = true;
 
-    municipality.landfills.forEach((l) => map.removeLayer(l.layer))
+    municipality.hideZones(map);
+    selectedZone.value = null;
 
     isMapLoading.value = false;
 }
@@ -128,10 +139,25 @@ const hideZones = async (municipality: MunicipalityLayer) => {
  */
 const municipalitySelectController = async (selected: MunicipalityLayer) => {
   console.log({selected});
+  // Remove zones from last municipality
+  selectedMunicipality.value?.hideZones(map);
 
   // Set selected region
   selectedMunicipality.value = selected;
 }
+
+/**
+ * Manages click on municipality
+ */
+const zonesSelectController = async (selected: ZoneLayer) => {
+  console.log({selected});
+  // unselect the previous zone
+  selectedZone.value?.unselect();
+  // Set selected region
+  selectedZone.value = selected;
+
+}
+
 
 /*
  * - HOOKS 
@@ -187,9 +213,10 @@ onMounted(async ()=> {
         v-if="dialogScope === 'MUNICIPALITY'" 
         :key="selectedMunicipality?.id"
         :municipality="selectedMunicipality as MunicipalityLayer"
-        @show-zones="showZones"
-        @hide-zones="hideZones"
+          @show-zones="showZones"
+          @hide-zones="hideZones"
       />
+      <ZoneDialog v-if="dialogScope === 'ZONE'" />
     </Dialog>
     <div class="loader" v-show="isMapLoading">
       <p>🌍 Your map is loading</p>
