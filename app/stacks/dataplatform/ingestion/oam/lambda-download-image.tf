@@ -1,21 +1,21 @@
 resource "aws_lambda_function" "download_image" {
-  function_name     = "${local.resprefix}-download-image"
-  role              = aws_iam_role.download_image.arn
-  filename          = data.archive_file.download_image_source.output_path
-  source_code_hash  = data.archive_file.download_image_source.output_sha256
+  function_name    = "${local.resprefix}-download-image"
+  role             = aws_iam_role.download_image.arn
+  filename         = data.archive_file.download_image_source.output_path
+  source_code_hash = data.archive_file.download_image_source.output_sha256
 
-  handler = "main.lambda_handler"
-  memory_size = 256
-  timeout = 300
-  runtime = "python3.12"
+  handler     = "main.lambda_handler"
+  memory_size = 512
+  timeout     = 900
+  runtime     = "python3.12"
 
   environment {
     variables = {
-      LANDINGZONE_BUCKET=var.landing_zone_bucket.name
+      LANDINGZONE_BUCKET = var.landing_zone_bucket.name
     }
   }
 
-  depends_on = [ aws_cloudwatch_log_group.download_image]
+  depends_on = [aws_cloudwatch_log_group.download_image]
 }
 
 resource "aws_iam_role" "download_image" {
