@@ -19,7 +19,7 @@ export class ZoneLayer {
 
   constructor(landfill: Landfill, parent: MunicipalityLayer, colorHex: string) {
     this.id = landfill.id.toString()
-    this.confidence = (landfill.confidence ?? 0) / 100
+    this.confidence = (landfill.confidence ?? 0)*100
     this.layer = L.geoJSON(landfill.geometry as GeoJsonObject)
     this.source = landfill.detected_from
     this.date = landfill.detection_time

@@ -34,6 +34,7 @@ const toggleZones = (onoff: boolean) => {
     </div>
     <div class="section monitors">
       <div class="title text-primary">Monitoraggi</div>
+      <p>This feature is still under development. <b>Stay Tuned for updates!</b></p>
     </div>
   </div>
 </template>
@@ -57,5 +58,10 @@ const toggleZones = (onoff: boolean) => {
 
 .row {
   margin-top: 1vh;
+}
+
+p {
+  margin-top: 2rem;
+  font-size: 1rem;
 }
 </style>

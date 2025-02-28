@@ -156,6 +156,8 @@ const zonesSelectController = async (selected: ZoneLayer) => {
   // Set selected region
   selectedZone.value = selected;
 
+  const bounds = selected.layer.getBounds();
+  map.fitBounds(bounds, {animate: true, maxZoom: 18, duration: 800});
 }
 
 
@@ -216,7 +218,7 @@ onMounted(async ()=> {
           @show-zones="showZones"
           @hide-zones="hideZones"
       />
-      <ZoneDialog v-if="dialogScope === 'ZONE'" />
+      <ZoneDialog v-if="dialogScope === 'ZONE'" :zone="selectedZone as ZoneLayer"/>
     </Dialog>
     <div class="loader" v-show="isMapLoading">
       <p>🌍 Your map is loading</p>
