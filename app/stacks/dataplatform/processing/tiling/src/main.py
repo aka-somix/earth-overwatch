@@ -32,6 +32,24 @@ def validate_s3_mode():
         raise ValueError(f"VALIDATION ERROR: {','.join(missing_vals)} not present")
 
 
+def generate_tile_name(dataset, xoff, yoff, xsize, ysize, image_file_name):
+    # Get the geotransform
+    geotransform = dataset.GetGeoTransform()
+
+    # Compute bounding box
+    x_min = geotransform[0] + xoff * geotransform[1]
+    y_max = geotransform[3] + yoff * geotransform[5]
+    x_max = x_min + xsize * geotransform[1]
+    y_min = y_max + ysize * geotransform[5]
+
+    # Output file name
+    output_filename = (
+        f"{image_file_name}_{x_min:.6f}_{y_min:.6f}_{x_max:.6f}_{y_max:.6f}.tif"
+    )
+
+    return output_filename
+
+
 def process_tile(dataset, xoff, yoff, xsize, ysize, output_path):
     """Process and save a tile."""
     try:
@@ -92,10 +110,10 @@ if __name__ == "__main__":
                 xsize = min(TILE_SIZE, width - xoff)
                 ysize = min(TILE_SIZE, height - yoff)
 
-                # Output file name
-                output_filename = f"{image_file_name}_{xoff}_{yoff}.tif"
+                output_filename = generate_tile_name(
+                    dataset, xoff, yoff, xsize, ysize, image_file_name
+                )
                 output_local_path = os.path.join(PROCESSED_DIR, output_filename)
-
                 # Process the tile
                 try:
                     process_tile(dataset, xoff, yoff, xsize, ysize, output_local_path)
