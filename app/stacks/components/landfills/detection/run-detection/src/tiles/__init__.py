@@ -1,5 +1,6 @@
 import json
-from core.conf import logs
+import re
+from core.conf import logs, TILE_SIZE
 from core.geojson import bbox_to_geojson
 
 
@@ -33,6 +34,28 @@ class BBox(object):
         return self.to_dict().__str__()
 
 
+def pixel_to_coordinates(ref_bbox: BBox, pix_bbox: BBox) -> BBox:
+    """
+    Convert bounding box pixel coordinates to geo-referenced coordinates.
+
+    :param ref_bbox: BBox, geo-referenced extent of the original image
+    :param px_bbox_list: list, bounding box in pixel coordinates [x1, y1, x2, y2, ...]
+    :return: BBox, geo-referenced bounding box
+    """
+
+    # Compute scaling factors
+    x_scale = (ref_bbox.x2 - ref_bbox.x1) / TILE_SIZE
+    y_scale = (ref_bbox.y2 - ref_bbox.y1) / TILE_SIZE
+
+    # Convert pixel coordinates to geo-referenced coordinates
+    x1_geo = ref_bbox.x1 + pix_bbox.x1 * x_scale
+    y1_geo = ref_bbox.y2 - pix_bbox.y1 * y_scale  # Invert y-axis (top-left origin)
+    x2_geo = ref_bbox.x1 + pix_bbox.x2 * x_scale
+    y2_geo = ref_bbox.y2 - pix_bbox.y2 * y_scale  # Invert y-axis (top-left origin)
+
+    return BBox(x1_geo, y1_geo, x2_geo, y2_geo)
+
+
 class TileMetadata(object):
     """Manages the Tile Metadata for inference"""
 
@@ -51,8 +74,12 @@ class TileMetadata(object):
         return BBox(x1, y1, x2, y2)
 
     def get_tile_bbox(self) -> BBox:
-        # TODO Implement it better
-        return self.get_image_bbox()
+        match = re.search(r"_(\d+)_(\d+)\.tif", self.s3_uri_tile)
+        x_min, y_min = match.groups()
+        x_max = int(x_min) + TILE_SIZE
+        y_max = int(y_min) + TILE_SIZE
+        tile_pixel_bbox = BBox(int(x_min), int(y_min), x_max, y_max)
+        return pixel_to_coordinates(self.get_image_bbox(), tile_pixel_bbox)
 
     def __str__(self):
         return f"TILE METADATA: |{self.image_id} | {self._bbox.__str__()} | {self.s3_uri_tile}"

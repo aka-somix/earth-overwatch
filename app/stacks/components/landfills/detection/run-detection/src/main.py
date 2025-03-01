@@ -41,7 +41,10 @@ detection_ctrl = DetectionController(inference_service, s3_imageservice)
 
 def process_message(tile: TileMetadata):
     logs.info(f"Processing {tile}")
+    image_bbox = tile.get_image_bbox()
+    print(f"Image BBox: {image_bbox}")
     tile_bbox = tile.get_tile_bbox()
+    print(f"Tile BBox: {tile_bbox}")
 
     # Step 1 - Use inference in order to detect landfills
     detections = detection_ctrl.run(tile.s3_uri_tile, tile_bbox)
