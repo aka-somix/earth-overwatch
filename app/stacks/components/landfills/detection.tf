@@ -4,17 +4,17 @@
 
 # Parse Detection Input Service
 resource "aws_lambda_function" "parse_detection_input" {
-  function_name     = "${local.resprefix}-parse-detection-input"
-  role              = aws_iam_role.parse_detection_input.arn
-  filename          = data.archive_file.parse_detection_input_source.output_path
-  source_code_hash  = data.archive_file.parse_detection_input_source.output_sha256
+  function_name    = "${local.resprefix}-parse-detection-input"
+  role             = aws_iam_role.parse_detection_input.arn
+  filename         = data.archive_file.parse_detection_input_source.output_path
+  source_code_hash = data.archive_file.parse_detection_input_source.output_sha256
 
-  handler = "main.lambda_handler"
+  handler     = "main.lambda_handler"
   memory_size = 128
-  timeout = 300
-  runtime = "python3.12"
+  timeout     = 300
+  runtime     = "python3.12"
 
-  depends_on = [ aws_cloudwatch_log_group.parse_detection_input]
+  depends_on = [aws_cloudwatch_log_group.parse_detection_input]
 }
 
 
@@ -51,19 +51,19 @@ resource "aws_iam_role_policy" "parse_detection_input_main_policy" {
   role = aws_iam_role.parse_detection_input.name
   name = "lambda-main-policy"
   policy = jsonencode({
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "s3:ListBucket",
-                "s3:GetObject"
-            ],
-            "Resource": [
-                "arn:aws:s3:::*",
-                "arn:aws:s3:::*/*"
-            ]
-        }
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "s3:ListBucket",
+          "s3:GetObject"
+        ],
+        "Resource" : [
+          "arn:aws:s3:::*",
+          "arn:aws:s3:::*/*"
+        ]
+      }
     ]
   })
 }
@@ -77,28 +77,28 @@ resource "aws_cloudwatch_log_group" "parse_detection_input" {
 
 # Run Detection Service
 resource "aws_lambda_function" "run_detection" {
-  function_name     = "${local.resprefix}-run-detection"
-  role              = aws_iam_role.run_detection.arn
-  filename          = data.archive_file.run_detection_source.output_path
-  source_code_hash  = data.archive_file.run_detection_source.output_sha256
+  function_name    = "${local.resprefix}-run-detection"
+  role             = aws_iam_role.run_detection.arn
+  filename         = data.archive_file.run_detection_source.output_path
+  source_code_hash = data.archive_file.run_detection_source.output_sha256
 
-  handler = "main.lambda_handler"
+  handler     = "main.lambda_handler"
   memory_size = 128
-  timeout = 300
-  runtime = "python3.12"
+  timeout     = 300
+  runtime     = "python3.12"
 
   environment {
     variables = {
-      API_KEY                 = data.aws_api_gateway_api_key.personal.value
-      DETECTION_QUEUE_URL     = aws_sqs_queue.images_to_predict.url
-      GEO_API_BASE_URL        = var.geo_apigw_endpoint
-      LANDFILL_API_BASE_URL   = aws_api_gateway_stage.env.invoke_url
-      SAGEMAKER_ENDPOINT      = "scrnts-dev-landfill-yolo-endpoint"     # TODO Remove Hard coding
-      TILES_PER_RUN           = 1
+      API_KEY               = data.aws_api_gateway_api_key.personal.value
+      DETECTION_QUEUE_URL   = aws_sqs_queue.images_to_predict.url
+      GEO_API_BASE_URL      = var.geo_apigw_endpoint
+      LANDFILL_API_BASE_URL = aws_api_gateway_stage.env.invoke_url
+      SAGEMAKER_ENDPOINT    = "scrnts-dev-landfill-yolo-endpoint" # TODO Remove Hard coding
+      TILES_PER_RUN         = 1
     }
   }
 
-  depends_on = [ aws_cloudwatch_log_group.run_detection]
+  depends_on = [aws_cloudwatch_log_group.run_detection]
 }
 
 resource "null_resource" "run_detection_build" {
@@ -153,29 +153,29 @@ resource "aws_iam_role_policy" "run_detection_main_policy" {
   role = aws_iam_role.run_detection.name
   name = "lambda-main-policy"
   policy = jsonencode({
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "s3:ListBucket",
-                "s3:GetObject"
-            ],
-            "Resource": [
-                "arn:aws:s3:::*",
-                "arn:aws:s3:::*/*"
-            ]
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "sqs:ReceiveMessage",
-                "sqs:DeleteMessage",
-                "sqs:DeleteMessageBatch",
-                "sqs:GetQueueAttributes"
-            ],
-            "Resource": "${aws_sqs_queue.images_to_predict.arn}"
-        }
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "s3:ListBucket",
+          "s3:GetObject"
+        ],
+        "Resource" : [
+          "arn:aws:s3:::*",
+          "arn:aws:s3:::*/*"
+        ]
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:DeleteMessageBatch",
+          "sqs:GetQueueAttributes"
+        ],
+        "Resource" : "${aws_sqs_queue.images_to_predict.arn}"
+      }
     ]
   })
 }
@@ -193,11 +193,11 @@ resource "aws_cloudwatch_log_group" "run_detection" {
 
 # SQS Queue for tiling requests pending
 resource "aws_sqs_queue" "images_to_predict" {
-  name                      = "${local.resprefix}-images-to-predict"
-  fifo_queue                = false
-  message_retention_seconds = 1209600  # 15 days
-  visibility_timeout_seconds = 300  # 15 minutes
-  max_message_size          = 262144  # 256 KB (default max)
+  name                       = "${local.resprefix}-images-to-predict"
+  fifo_queue                 = false
+  message_retention_seconds  = 1209600 # 15 days
+  visibility_timeout_seconds = 300     # 15 minutes
+  max_message_size           = 262144  # 256 KB (default max)
 }
 
 
@@ -206,46 +206,46 @@ resource "aws_sfn_state_machine" "detection_orchestration" {
   role_arn = aws_iam_role.detection_orchestration.arn
 
   definition = jsonencode({
-    "StartAt": "Parse Tiles from Input",
-    "States": {
-      "Parse Tiles from Input": {
-        "Parameters": {
-          "FunctionName": "${aws_lambda_function.parse_detection_input.arn}",
-          "Payload.$": "$"
+    "StartAt" : "Parse Tiles from Input",
+    "States" : {
+      "Parse Tiles from Input" : {
+        "Parameters" : {
+          "FunctionName" : "${aws_lambda_function.parse_detection_input.arn}",
+          "Payload.$" : "$"
         },
-        "Resource": "arn:aws:states:::lambda:invoke",
-        "Type": "Task",
-        "OutputPath": "$.Payload",
-        "Next": "Batch and distribute Tiles"
+        "Resource" : "arn:aws:states:::lambda:invoke",
+        "Type" : "Task",
+        "OutputPath" : "$.Payload",
+        "Next" : "Batch and distribute Tiles"
       },
-      "Batch and distribute Tiles": {
-        "Type": "Map",
-        "ItemProcessor": {
-          "ProcessorConfig": {
-            "Mode": "DISTRIBUTED",
-            "ExecutionType": "STANDARD"
+      "Batch and distribute Tiles" : {
+        "Type" : "Map",
+        "ItemProcessor" : {
+          "ProcessorConfig" : {
+            "Mode" : "DISTRIBUTED",
+            "ExecutionType" : "STANDARD"
           },
-          "StartAt": "Send Detection Request on Tiles Batch",
-          "States": {
-            "Send Detection Request on Tiles Batch": {
-              "Type": "Task",
-              "Parameters": {
-                "Entries.$": "$.Items",
-                "QueueUrl": "${aws_sqs_queue.images_to_predict.url}"
+          "StartAt" : "Send Detection Request on Tiles Batch",
+          "States" : {
+            "Send Detection Request on Tiles Batch" : {
+              "Type" : "Task",
+              "Parameters" : {
+                "Entries.$" : "$.Items",
+                "QueueUrl" : "${aws_sqs_queue.images_to_predict.url}"
               },
-              "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessageBatch",
-              "End": true
+              "Resource" : "arn:aws:states:::aws-sdk:sqs:sendMessageBatch",
+              "End" : true
             }
           }
         },
-        "End": true,
-        "Label": "BatchanddistributeTiles",
-        "MaxConcurrency": 1000,
-        "ItemBatcher": {
-          "MaxItemsPerBatch": 10,
-          "MaxInputBytesPerBatch": 262144
+        "End" : true,
+        "Label" : "BatchanddistributeTiles",
+        "MaxConcurrency" : 1000,
+        "ItemBatcher" : {
+          "MaxItemsPerBatch" : 10,
+          "MaxInputBytesPerBatch" : 262144
         },
-        "ItemsPath": "$.Entries"
+        "ItemsPath" : "$.Entries"
       }
     }
   })
@@ -276,30 +276,30 @@ resource "aws_iam_role_policy" "detection_orchestration_policy" {
     Version = "2012-10-17",
     Statement = [
       {
-        "Effect": "Allow",
-        "Action": [
+        "Effect" : "Allow",
+        "Action" : [
           "sqs:SendMessage",
           "sqs:SendMessageBatch",
           "sqs:ReceiveMessage",
           "sqs:DeleteMessage"
         ],
-        "Resource": "${aws_sqs_queue.images_to_predict.arn}"
+        "Resource" : "${aws_sqs_queue.images_to_predict.arn}"
       },
       {
-        "Effect": "Allow",
-        "Action": [
+        "Effect" : "Allow",
+        "Action" : [
           "states:StartExecution",
           "states:DescribeExecution",
           "states:StopExecution"
         ],
-        "Resource": "arn:aws:states:${var.region}:${var.account_id}:stateMachine:${local.resprefix}-*"
+        "Resource" : "arn:aws:states:${var.region}:${var.account_id}:stateMachine:${local.resprefix}-*"
       },
       {
-        "Effect": "Allow",
-        "Action": [
+        "Effect" : "Allow",
+        "Action" : [
           "lambda:InvokeFunction"
         ],
-        "Resource": "${aws_lambda_function.parse_detection_input.arn}"
+        "Resource" : "${aws_lambda_function.parse_detection_input.arn}"
       },
       {
         Effect = "Allow",
@@ -320,6 +320,51 @@ resource "aws_iam_role_policy" "detection_orchestration_policy" {
         Resource = [
           "arn:aws:events:${var.region}:${var.account_id}:rule/*"
         ]
+      }
+    ]
+  })
+}
+
+#
+# -------------- Eventbridge rule attachment --------------
+#
+resource "aws_cloudwatch_event_target" "detection_react_to_newdata" {
+  target_id      = "detection-handler"
+  arn            = aws_sfn_state_machine.detection_orchestration.arn
+  rule           = var.eventrule_be_detect_landfills.name
+  event_bus_name = var.backend_eventbus.name
+
+  role_arn = aws_iam_role.detection_react_to_newdata.arn
+}
+
+resource "aws_iam_role" "detection_react_to_newdata" {
+  name = "${local.resprefix}-detection-react-to-newdata-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "events.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "detection_react_to_newdata_invoke_sfn" {
+  role = aws_iam_role.detection_react_to_newdata.name
+  name = "InvokeStepFunctionsPolicy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "states:StartExecution"
+        Resource = aws_sfn_state_machine.detection_orchestration.arn
       }
     ]
   })

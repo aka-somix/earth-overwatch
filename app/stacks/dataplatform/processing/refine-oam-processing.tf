@@ -23,18 +23,18 @@ resource "aws_glue_job" "refine_oam" {
     "--enable-glue-datacatalog"          = "true"
     "--enable-glue-datacatalog"          = "true"
     # Apache Sedona
-    "--additional-python-modules"        = "apache-sedona==1.7.0"
-    "--extra-jars"                       = "https://repo1.maven.org/maven2/org/apache/sedona/sedona-spark-shaded-3.3_2.12/1.7.0/sedona-spark-shaded-3.3_2.12-1.7.0.jar,https://repo1.maven.org/maven2/org/datasyslab/geotools-wrapper/1.7.0-28.5/geotools-wrapper-1.7.0-28.5.jar"
+    "--additional-python-modules" = "apache-sedona==1.7.0"
+    "--extra-jars"                = "https://repo1.maven.org/maven2/org/apache/sedona/sedona-spark-shaded-3.3_2.12/1.7.0/sedona-spark-shaded-3.3_2.12-1.7.0.jar,https://repo1.maven.org/maven2/org/datasyslab/geotools-wrapper/1.7.0-28.5/geotools-wrapper-1.7.0-28.5.jar"
     # Runtime parameters
-    "--source_json_s3_path"              = "s3://${var.landing_zone_bucket.name}/oam/metadata/italy/2024/04/08/1738591402.json"
-    "--destination_s3_path"              = "s3://${var.refined_zone_bucket.name}/oam/metadata/region=italy"
-    "--destination_table"                = "aerial.oam"
-    "--dynamodb_destination_table"       = aws_dynamodb_table.oam_store_and_forward.name
+    "--source_json_s3_path"        = "s3://${var.landing_zone_bucket.name}/oam/metadata/italy/2024/04/08/1738591402.json"
+    "--destination_s3_path"        = "s3://${var.refined_zone_bucket.name}/oam/metadata/region=italy"
+    "--destination_table"          = "aerial.oam"
+    "--dynamodb_destination_table" = aws_dynamodb_table.oam_store_and_forward.name
   }
 
   execution_class = "FLEX"
   execution_property {
-    max_concurrent_runs = 5
+    max_concurrent_runs = 10
   }
 }
 
@@ -59,16 +59,16 @@ resource "aws_cloudwatch_log_group" "refine_oam" {
 
 # SQS Queue for oam processing requests pending
 resource "aws_sqs_queue" "oam_processing_requests" {
-  name                      = "${local.resprefix}-oam-refining-requests-queue"
-  fifo_queue                = false
-  message_retention_seconds = 1209600  # 15 days
-  visibility_timeout_seconds = 300  # 5 minutes
-  max_message_size          = 262144  # 256 KB (default max)
-  receive_wait_time_seconds = 10
+  name                       = "${local.resprefix}-oam-refining-requests-queue"
+  fifo_queue                 = false
+  message_retention_seconds  = 1209600 # 15 days
+  visibility_timeout_seconds = 300     # 5 minutes
+  max_message_size           = 262144  # 256 KB (default max)
+  receive_wait_time_seconds  = 10
 }
 resource "aws_sqs_queue_policy" "oam_processing_requests" {
   queue_url = aws_sqs_queue.oam_processing_requests.id
-  policy    = jsonencode({
+  policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
@@ -93,7 +93,7 @@ resource "aws_dynamodb_table" "oam_store_and_forward" {
   name         = "${local.resprefix}-oam-storenforward"
   billing_mode = "PAY_PER_REQUEST"
 
-  hash_key = "status"
+  hash_key  = "status"
   range_key = "id"
 
   attribute {
@@ -114,8 +114,8 @@ resource "aws_iam_policy" "oam_store_and_forward_writeread" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "dynamodb:Describe*",
           "dynamodb:Get*",
           "dynamodb:PutItem",
@@ -138,158 +138,158 @@ resource "aws_sfn_state_machine" "oam_refine_orch" {
   role_arn = aws_iam_role.oam_refine_orch.arn
 
   definition = jsonencode({
-    "StartAt": "RetrieveMessages",
-    "States": {
-      "RetrieveMessages": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::aws-sdk:sqs:receiveMessage",
-        "Parameters": {
-          "QueueUrl": "${aws_sqs_queue.oam_processing_requests.url}",
-          "MaxNumberOfMessages": 10,
-          "WaitTimeSeconds": 10
+    "StartAt" : "RetrieveMessages",
+    "States" : {
+      "RetrieveMessages" : {
+        "Type" : "Task",
+        "Resource" : "arn:aws:states:::aws-sdk:sqs:receiveMessage",
+        "Parameters" : {
+          "QueueUrl" : "${aws_sqs_queue.oam_processing_requests.url}",
+          "MaxNumberOfMessages" : 10,
+          "WaitTimeSeconds" : 10
         },
-        "ResultPath": "$",
-        "Next": "CheckMessages"
+        "ResultPath" : "$",
+        "Next" : "CheckMessages"
       },
-      "CheckMessages": {
-        "Type": "Choice",
-        "Choices": [
+      "CheckMessages" : {
+        "Type" : "Choice",
+        "Choices" : [
           {
-            "Variable": "$.Messages",
-            "IsPresent": true,
-            "Next": "ProcessMessages"
+            "Variable" : "$.Messages",
+            "IsPresent" : true,
+            "Next" : "ProcessMessages"
           }
         ],
-        "Default": "GetPendingItems"
+        "Default" : "GetPendingItems"
       },
-      "ProcessMessages": {
-        "Type": "Map",
-        "InputPath": "$.Messages",
-        "ItemsPath": "$",
-        "MaxConcurrency": 5,
-        "Iterator": {
-          "StartAt": "ExtractBody",
-          "States": {
-            "ExtractBody": {
-              "Next": "ExtractMessage",
-              "Parameters": {
-                "Body.$": "States.StringToJson($.Body)",
-                "ReceiptHandle.$": "$.ReceiptHandle"
+      "ProcessMessages" : {
+        "Type" : "Map",
+        "InputPath" : "$.Messages",
+        "ItemsPath" : "$",
+        "MaxConcurrency" : 5,
+        "Iterator" : {
+          "StartAt" : "ExtractBody",
+          "States" : {
+            "ExtractBody" : {
+              "Next" : "ExtractMessage",
+              "Parameters" : {
+                "Body.$" : "States.StringToJson($.Body)",
+                "ReceiptHandle.$" : "$.ReceiptHandle"
               },
-              "Type": "Pass"
+              "Type" : "Pass"
             },
-            "ExtractMessage": {
-              "Parameters": {
-                "Message.$": "States.StringToJson($.Body.Message)",
-                "ReceiptHandle.$": "$.ReceiptHandle"
+            "ExtractMessage" : {
+              "Parameters" : {
+                "Message.$" : "States.StringToJson($.Body.Message)",
+                "ReceiptHandle.$" : "$.ReceiptHandle"
               },
-              "Type": "Pass",
-              "ResultPath": "$.Result",
-              "Next": "StartGlueJob"
+              "Type" : "Pass",
+              "ResultPath" : "$.Result",
+              "Next" : "StartGlueJob"
             },
-            "StartGlueJob": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::glue:startJobRun.sync",
-              "Parameters": {
-                "JobName": "${aws_glue_job.refine_oam.id}",
-                "Arguments": {
-                  "--source_json_s3_path.$": "$.Result.Message.meta_s3_uri"
+            "StartGlueJob" : {
+              "Type" : "Task",
+              "Resource" : "arn:aws:states:::glue:startJobRun.sync",
+              "Parameters" : {
+                "JobName" : "${aws_glue_job.refine_oam.id}",
+                "Arguments" : {
+                  "--source_json_s3_path.$" : "$.Result.Message.meta_s3_uri"
                 }
               },
-              "ResultPath": null,
-              "Next": "DeleteMessage"
+              "ResultPath" : null,
+              "Next" : "DeleteMessage"
             },
-            "DeleteMessage": {
-              "Resource": "arn:aws:states:::aws-sdk:sqs:deleteMessage",
-              "Type": "Task",
-              "Parameters": {
-                "QueueUrl": "${aws_sqs_queue.oam_processing_requests.url}",
-                "ReceiptHandle.$": "$.Result.ReceiptHandle"
+            "DeleteMessage" : {
+              "Resource" : "arn:aws:states:::aws-sdk:sqs:deleteMessage",
+              "Type" : "Task",
+              "Parameters" : {
+                "QueueUrl" : "${aws_sqs_queue.oam_processing_requests.url}",
+                "ReceiptHandle.$" : "$.Result.ReceiptHandle"
               },
-              "End": true
+              "End" : true
             }
           }
         },
-        "Next": "GetPendingItems"
+        "Next" : "GetPendingItems"
       },
-      "GetPendingItems": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::aws-sdk:dynamodb:query",
-        "Parameters": {
-          "TableName": "${aws_dynamodb_table.oam_store_and_forward.name}",
-          "KeyConditionExpression": "#status = :pending",
-          "ExpressionAttributeNames": {
-            "#status": "status"
+      "GetPendingItems" : {
+        "Type" : "Task",
+        "Resource" : "arn:aws:states:::aws-sdk:dynamodb:query",
+        "Parameters" : {
+          "TableName" : "${aws_dynamodb_table.oam_store_and_forward.name}",
+          "KeyConditionExpression" : "#status = :pending",
+          "ExpressionAttributeNames" : {
+            "#status" : "status"
           },
-          "ExpressionAttributeValues": {
-            ":pending": {
-              "S": "PENDING"
+          "ExpressionAttributeValues" : {
+            ":pending" : {
+              "S" : "PENDING"
             }
           }
         },
-        "Next": "CheckPendingItems"
+        "Next" : "CheckPendingItems"
       },
-      "CheckPendingItems": {
-        "Type": "Choice",
-        "Choices": [
+      "CheckPendingItems" : {
+        "Type" : "Choice",
+        "Choices" : [
           {
-            "Variable": "$.Items",
-            "IsPresent": true,
-            "Next": "ProcessPendingItems"
+            "Variable" : "$.Items",
+            "IsPresent" : true,
+            "Next" : "ProcessPendingItems"
           }
         ],
-        "Default": "EndState"
+        "Default" : "EndState"
       },
-      "ProcessPendingItems": {
-        "Type": "Map",
-        "InputPath": "$.Items",
-        "ItemsPath": "$",
-        "MaxConcurrency": 5,
-        "Iterator": {
-          "StartAt": "SendEventBridge",
-          "States": {
-            "SendEventBridge": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::events:putEvents",
-              "Parameters": {
-                "Entries": [
+      "ProcessPendingItems" : {
+        "Type" : "Map",
+        "InputPath" : "$.Items",
+        "ItemsPath" : "$",
+        "MaxConcurrency" : 5,
+        "Iterator" : {
+          "StartAt" : "SendEventBridge",
+          "States" : {
+            "SendEventBridge" : {
+              "Type" : "Task",
+              "Resource" : "arn:aws:states:::events:putEvents",
+              "Parameters" : {
+                "Entries" : [
                   {
-                    "Source": "processing",
-                    "DetailType": "dataplatform/aerial",
-                    "Detail": {
-                      "id.$": "$.id.S",
-                      "s3Source": "s3://${var.refined_zone_bucket.name}/oam"
-                      "bbox.$": "$.bbox.S"
+                    "Source" : "dataplatform",
+                    "DetailType" : "aerial/oam",
+                    "Detail" : {
+                      "id.$" : "$.id.S",
+                      "s3Source" : "s3://${var.refined_zone_bucket.name}/oam/tiles"
+                      "bbox.$" : "$.bbox.S"
                     },
-                    "EventBusName": "${var.dataplatform_eventbus.name}"
+                    "EventBusName" : "${var.dataplatform_eventbus.name}"
                   }
                 ]
               },
-              "ResultPath": "$.Event",
-              "Next": "DeleteFromDynamoDB"
+              "ResultPath" : "$.Event",
+              "Next" : "DeleteFromDynamoDB"
             },
-            "DeleteFromDynamoDB": {
-              "Type": "Task",
-              "Resource": "arn:aws:states:::aws-sdk:dynamodb:deleteItem",
-              "Parameters": {
-                "TableName": "${aws_dynamodb_table.oam_store_and_forward.name}",
-                "Key": {
-                  "status": {
-                    "S": "PENDING"
+            "DeleteFromDynamoDB" : {
+              "Type" : "Task",
+              "Resource" : "arn:aws:states:::aws-sdk:dynamodb:deleteItem",
+              "Parameters" : {
+                "TableName" : "${aws_dynamodb_table.oam_store_and_forward.name}",
+                "Key" : {
+                  "status" : {
+                    "S" : "PENDING"
                   },
-                  "id": {
-                    "S.$": "$.id.S"
+                  "id" : {
+                    "S.$" : "$.id.S"
                   }
                 }
               },
-              "End": true
+              "End" : true
             }
           }
         },
-        "End": true
+        "End" : true
       },
-      "EndState": {
-        "Type": "Succeed"
+      "EndState" : {
+        "Type" : "Succeed"
       }
     }
   })
@@ -364,6 +364,6 @@ resource "aws_iam_role_policy" "oam_refine_orch_policy" {
   })
 }
 resource "aws_iam_role_policy_attachment" "oam_refine_orch_readwrite_dynamodb" {
-  role = aws_iam_role.oam_refine_orch.name
+  role       = aws_iam_role.oam_refine_orch.name
   policy_arn = aws_iam_policy.oam_store_and_forward_writeread.arn
 }
