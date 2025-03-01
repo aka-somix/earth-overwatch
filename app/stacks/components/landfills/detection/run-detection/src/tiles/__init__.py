@@ -1,5 +1,4 @@
 import json
-import re
 from core.conf import logs, TILE_SIZE
 from core.geojson import bbox_to_geojson
 
@@ -74,11 +73,13 @@ class TileMetadata(object):
         return BBox(x1, y1, x2, y2)
 
     def get_tile_bbox(self) -> BBox:
-        match = re.search(r"_(\d+)_(\d+)\.tif", self.s3_uri_tile)
-        x_min, y_min = match.groups()
-        x_max = int(x_min) + TILE_SIZE
-        y_max = int(y_min) + TILE_SIZE
-        tile_pixel_bbox = BBox(int(x_min), int(y_min), x_max, y_max)
+        # Extract coordinates from tile
+        coordinates = [float(part) for part in self.s3_uri_tile.split(".tif")[0].split("_")[1:]]
+
+        if len(coordinates) != 4:
+            raise RuntimeError(f"Tile Coordinates found from s3 are not 4 as expected: {coordinates}")
+
+        tile_pixel_bbox = BBox(*coordinates)
         return pixel_to_coordinates(self.get_image_bbox(), tile_pixel_bbox)
 
     def __str__(self):

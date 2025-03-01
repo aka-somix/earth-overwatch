@@ -52,6 +52,6 @@ class DetectionController(object):
             )
             geobox = pixel_to_coordinates(ref_bbox, inf_box)
             confidence = inf["confidence"]
-            DetectionResult(geobox, confidence, image_uri)
+            detections.append(DetectionResult(geobox, confidence, image_uri))
 
         return detections
