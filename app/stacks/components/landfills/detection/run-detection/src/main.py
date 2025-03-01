@@ -29,13 +29,13 @@ from tiles.detection import DetectionController
 from services.geo import GeoService
 from services.landfills import NewLandfillRequest, LandfillService
 from services.image import S3ImageService
-from services.inference import SagemakerInferenceService
+from services.inference import SagemakerInferenceService, MOCKInferenceService
 
 # Inject Services Objects
 geoservice = GeoService(GEO_API_BASE_URL)
 landfillservice = LandfillService(LANDFILL_API_BASE_URL)
 s3_imageservice = S3ImageService(s3)
-inference_service = SagemakerInferenceService(sagemaker, endpoint=SAGEMAKER_ENDPOINT)
+inference_service = MOCKInferenceService(sagemaker, endpoint=SAGEMAKER_ENDPOINT)
 detection_ctrl = DetectionController(inference_service, s3_imageservice)
 
 
