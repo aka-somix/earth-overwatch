@@ -1,7 +1,7 @@
 
 locals {
   detr50_folder  = "landfill-detr50"
-  detr50_version = "20250303"
+  detr50_version = "20250303.2"
 }
 
 #
