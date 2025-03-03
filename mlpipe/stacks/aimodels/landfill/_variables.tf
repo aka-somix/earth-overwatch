@@ -33,7 +33,7 @@ variable "aws_s3_bucket_aimodels" {
 
 variable "vpc" {
   type = object({
-    id = string 
+    id = string
   })
 }
 
@@ -43,8 +43,8 @@ variable "subnets" {
 
 variable "datasets_efs" {
   type = object({
-    arn = string
-    file_system_id = string 
+    arn            = string
+    file_system_id = string
   })
 }
 
@@ -57,15 +57,15 @@ variable "landfill_dataset_folder" {
 }
 
 variable "endpoint_max_concurrency" {
-  type = number
+  type    = number
   default = 5
 }
 
 variable "endpoint_memory" {
-  type = number
+  type    = number
   default = 2048
   validation {
-    condition = contains([1024, 2048, 4096, 8192, 16384], var.endpoint_memory)
+    condition     = contains([1024, 2048, 4096, 8192, 16384], var.endpoint_memory)
     error_message = "value"
   }
 }
